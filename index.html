@@ -35,7 +35,7 @@
                         let city = artist.City.trim();
                         
                         if (artist.Country && artist.Country.toUpperCase() === "USA") {
-                            city = city.replace(/,? ?USA$/i, "");
+                            city = city.replace(/,? ?USA$/i, ""); // Ensure "USA" is removed
                         }
 
                         let key = `${city}-${artist.Latitude},${artist.Longitude}`;
@@ -54,7 +54,7 @@
                     for (let key in locations) {
                         let location = locations[key];
                         let contentString = `<h3 style="margin:0;">${location.city}</h3><hr>` +
-                                            [...location.artists].join('<br>');
+                                            [...location.artists].join('<br>'); // USA fully removed
                         let infowindow = new google.maps.InfoWindow({ content: contentString });
 
                         let marker = new google.maps.Marker({
