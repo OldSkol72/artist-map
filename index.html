@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -98,7 +98,6 @@
         .sidebar-toggle { position: fixed; top: 50px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 10; }
         .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
         .artist-item:hover { background-color: #f0f0f0; }
-        .search-bar { width: 100%; padding: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
@@ -107,9 +106,7 @@
     <h1>Artist Locations Map</h1>
     <div id="map"></div>
     <div class="sidebar collapsed" id="sidebar">
-        <div id="sidebar-content">
-            <input type="text" class="search-bar" placeholder="Search for an artist..." onkeyup="filterArtists(this.value)">
-        </div>
+        <div id="sidebar-content"></div>
     </div>
 </body>
 </html>
