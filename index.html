@@ -25,13 +25,13 @@
 
         function recenterMap() {
             if (window.map) {
-                map.setCenter({ lat: 25, lng: 10 });
-                map.setZoom(2);
+                window.map.setCenter({ lat: 25, lng: 10 });
+                window.map.setZoom(2);
             }
         }
 
         function initMap() {
-            window.map = new google.maps.Map(document.getElementById('map'), {
+            var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
                 center: { lat: 25, lng: 10 }
             });
@@ -124,7 +124,6 @@
                     openInfoWindow.close();
                     openInfoWindow = null;
                 }
-                toggleSidebar(); // Toggle sidebar when clicking on the map
             });
         }
     </script>
