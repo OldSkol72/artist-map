@@ -23,8 +23,15 @@
             sidebar.classList.toggle('collapsed');
         }
 
+        function recenterMap() {
+            if (window.map) {
+                map.setCenter({ lat: 25, lng: 10 });
+                map.setZoom(2);
+            }
+        }
+
         function initMap() {
-            var map = new google.maps.Map(document.getElementById('map'), {
+            window.map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
                 center: { lat: 25, lng: 10 }
             });
@@ -125,7 +132,7 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         #map { width: 60%; margin: 0 auto; display: flex; align-items: center; justify-content: center; height: 600px; margin: 0 auto; transition: opacity 1s ease-in-out; z-index: 1; position: relative; }
-        .logo { max-width: 200px; margin-top: 20px; }
+        .logo { max-width: 200px; margin-top: 20px; cursor: pointer; }
         .sidebar { position: fixed; top: 50px; left: 0; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out; z-index: 1000; }
         .collapsed { transform: translateX(-100%); }
         .sidebar-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
@@ -138,7 +145,7 @@
     <div class="sidebar collapsed" id="sidebar">
         <div id="sidebar-content"></div>
     </div>
-    <img src="logo.png" alt="Site Logo" class="logo">
+    <img src="logo.png" alt="Site Logo" class="logo" onclick="recenterMap()">
     <h1>Artist Locations Map</h1>
     <div id="map"></div>
 </body>
