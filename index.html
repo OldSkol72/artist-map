@@ -91,73 +91,7 @@
                         });
 
                         markers.push(marker);
-
-                        // Organize artists alphabetically
-                        [...location.artists].forEach(artist => {
-                            let firstLetter = artist.charAt(0).toUpperCase();
-                            if (!artistGroups[firstLetter]) {
-                                artistGroups[firstLetter] = [];
-                            }
-                            artistGroups[firstLetter].push({ name: artist, marker: marker });
-                        });
-
-                        // Organize cities alphabetically
-                        let firstLetterCity = location.city.charAt(0).toUpperCase();
-                        if (!cityGroups[firstLetterCity]) {
-                            cityGroups[firstLetterCity] = [];
-                        }
-                        cityGroups[firstLetterCity].push({ name: location.city, marker: marker });
                     }
-
-                    let sortedLetters = Object.keys(artistGroups).sort();
-                    sortedLetters.forEach(letter => {
-                        let letterHeader = document.createElement('h3');
-                        letterHeader.textContent = letter;
-                        sidebar.appendChild(letterHeader);
-
-                        artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
-                        artistGroups[letter].forEach(artistEntry => {
-                            let artistListItem = document.createElement('div');
-                            artistListItem.classList.add('artist-item');
-                            artistListItem.textContent = artistEntry.name;
-                            artistListItem.addEventListener('mouseover', () => {
-                                artistListItem.style.backgroundColor = '#f0f0f0';
-                            });
-                            artistListItem.addEventListener('mouseout', () => {
-                                artistListItem.style.backgroundColor = '';
-                            });
-                            artistListItem.addEventListener('click', () => {
-                                window.map.setCenter(artistEntry.marker.getPosition());
-                                window.map.setZoom(9);
-                            });
-                            sidebar.appendChild(artistListItem);
-                        });
-                    });
-                    
-                    let sortedCityLetters = Object.keys(cityGroups).sort();
-                    sortedCityLetters.forEach(letter => {
-                        let letterHeader = document.createElement('h3');
-                        letterHeader.textContent = letter;
-                        citiesSidebar.appendChild(letterHeader);
-
-                        cityGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
-                        cityGroups[letter].forEach(cityEntry => {
-                            let cityListItem = document.createElement('div');
-                            cityListItem.classList.add('city-item');
-                            cityListItem.textContent = cityEntry.name;
-                            cityListItem.addEventListener('mouseover', () => {
-                                cityListItem.style.backgroundColor = '#f0f0f0';
-                            });
-                            cityListItem.addEventListener('mouseout', () => {
-                                cityListItem.style.backgroundColor = '';
-                            });
-                            cityListItem.addEventListener('click', () => {
-                                window.map.setCenter(cityEntry.marker.getPosition());
-                                window.map.setZoom(9);
-                            });
-                            citiesSidebar.appendChild(cityListItem);
-                        });
-                    });
                 });
         }
     </script>
@@ -165,9 +99,13 @@
         body { font-family: Arial, sans-serif; text-align: center; }
         .artist-item, .city-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
         .artist-item:hover, .city-item:hover { background-color: #f0f0f0; }
+        #map { width: 100%; height: 600px; margin-top: 20px; }
+        .logo { max-width: 200px; margin-top: 20px; cursor: pointer; }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
+    <img src="logo.png" alt="Site Logo" class="logo" onclick="recenterMap()">
+    <h1>Artist Locations Map</h1>
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Artists</button>
     <button class="cities-toggle" onclick="toggleCitiesSidebar()">☰ Cities</button>
     <div class="sidebar collapsed" id="sidebar">
