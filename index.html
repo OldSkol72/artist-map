@@ -130,6 +130,14 @@
         .sidebar-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
         .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
         .artist-item:hover { background-color: #f0f0f0; }
+        
+        @media (max-width: 768px) { 
+            #map { 
+                width: 100%; 
+                height: 90vh; /* Make it taller for mobile */
+                margin: 0; 
+            }
+        }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
