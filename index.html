@@ -18,19 +18,10 @@
                 .catch(error => console.error('Error fetching API key:', error));
         }
 
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-        }
-
         function initMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
-                center: { lat: 20, lng: 0 },
-                styles: [
-                    { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
-                    { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
-                    { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] }
-                ]
+                center: { lat: 20, lng: 0 }
             });
 
             fetch('artists.json')  // Load JSON file
@@ -39,8 +30,14 @@
                     let locations = {};
                     let openInfoWindow = null;
 
+                    // Group artists by city and coordinates
                     data.forEach(artist => {
-                        let city = artist.City.trim().replace(/,? ?USA$/i, "");
+                        let city = artist.City.trim();
+                        
+                        if (artist.Country && artist.Country.toUpperCase() === "USA") {
+                            city = city.replace(/,? ?USA$/i, "");
+                        }
+
                         let key = `${city}-${artist.Latitude},${artist.Longitude}`;
                         if (!locations[key]) {
                             locations[key] = {
@@ -56,24 +53,29 @@
                     let markers = [];
                     for (let key in locations) {
                         let location = locations[key];
-                        let contentString = `<h3>${location.city}</h3><hr>` +
+                        let contentString = `<h3 style="margin:0;">${location.city}</h3><hr>` +
                                             [...location.artists].join('<br>');
                         let infowindow = new google.maps.InfoWindow({ content: contentString });
 
                         let marker = new google.maps.Marker({
                             position: { lat: location.lat, lng: location.lng },
-                            map: map,
-                            icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                            map: map
                         });
 
                         marker.addListener('click', function() {
-                            if (openInfoWindow) openInfoWindow.close();
+                            if (openInfoWindow) {
+                                openInfoWindow.close();
+                            }
                             openInfoWindow = infowindow;
                             infowindow.open(map, marker);
                         });
 
                         markers.push(marker);
                     }
+
+                    new MarkerClusterer(map, markers, {
+                        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+                    });
                 })
                 .catch(error => console.error('Error loading artist data:', error));
         }
@@ -83,14 +85,9 @@
         body { font-family: Arial, sans-serif; text-align: center; }
         #map { width: 100%; height: 600px; }
         .logo { max-width: 200px; margin-top: 20px; }
-        .dark-mode { background-color: #1a1a1a; color: white; }
-        .dark-mode h1 { color: #f0a500; }
-        .toggle-btn { margin: 10px; padding: 10px; cursor: pointer; background: #222; color: white; border: none; border-radius: 5px; }
-        .sidebar { position: fixed; top: 50px; left: 10px; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
-    <button class="toggle-btn" onclick="toggleDarkMode()">Toggle Dark Mode</button>
     <img src="logo.png" alt="Site Logo" class="logo">
     <h1>Artist Locations Map</h1>
     <div id="map"></div>
