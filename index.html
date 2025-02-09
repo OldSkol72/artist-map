@@ -23,6 +23,11 @@
             sidebar.classList.toggle('collapsed');
         }
 
+        function toggleCitiesSidebar() {
+            let sidebar = document.getElementById('cities-sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
         function recenterMap() {
             if (window.map) {
                 window.map.setCenter({ lat: 25, lng: 10 });
@@ -44,8 +49,11 @@
                 .then(data => {
                     let locations = {};
                     let sidebar = document.getElementById('sidebar-content');
+                    let citiesSidebar = document.getElementById('cities-sidebar-content');
                     sidebar.innerHTML = "";
+                    citiesSidebar.innerHTML = "";
                     let artistGroups = {};
+                    let cityGroups = {};
 
                     data.forEach(artist => {
                         let city = artist.City.trim().replace(/,? ?USA$/i, "");
@@ -84,6 +92,7 @@
 
                         markers.push(marker);
 
+                        // Organize artists alphabetically
                         [...location.artists].forEach(artist => {
                             let firstLetter = artist.charAt(0).toUpperCase();
                             if (!artistGroups[firstLetter]) {
@@ -91,6 +100,13 @@
                             }
                             artistGroups[firstLetter].push({ name: artist, marker: marker });
                         });
+
+                        // Organize cities alphabetically
+                        let firstLetterCity = location.city.charAt(0).toUpperCase();
+                        if (!cityGroups[firstLetterCity]) {
+                            cityGroups[firstLetterCity] = [];
+                        }
+                        cityGroups[firstLetterCity].push({ name: location.city, marker: marker });
                     }
 
                     let sortedLetters = Object.keys(artistGroups).sort();
@@ -104,12 +120,6 @@
                             let artistListItem = document.createElement('div');
                             artistListItem.classList.add('artist-item');
                             artistListItem.textContent = artistEntry.name;
-                            artistListItem.addEventListener('mouseover', () => {
-                                artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
-                            });
-                            artistListItem.addEventListener('mouseout', () => {
-                                artistEntry.marker.setAnimation(null);
-                            });
                             artistListItem.addEventListener('click', () => {
                                 window.map.setCenter(artistEntry.marker.getPosition());
                                 window.map.setZoom(9);
@@ -117,45 +127,44 @@
                             sidebar.appendChild(artistListItem);
                         });
                     });
-                })
-                .catch(error => console.error('Error loading artist data:', error));
+                    
+                    let sortedCityLetters = Object.keys(cityGroups).sort();
+                    sortedCityLetters.forEach(letter => {
+                        let letterHeader = document.createElement('h3');
+                        letterHeader.textContent = letter;
+                        citiesSidebar.appendChild(letterHeader);
 
-            window.map.addListener('click', function() {
-                if (openInfoWindow) {
-                    openInfoWindow.close();
-                    openInfoWindow = null;
-                }
-                toggleSidebar();
-            });
+                        cityGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
+                        cityGroups[letter].forEach(cityEntry => {
+                            let cityListItem = document.createElement('div');
+                            cityListItem.classList.add('city-item');
+                            cityListItem.textContent = cityEntry.name;
+                            cityListItem.addEventListener('click', () => {
+                                window.map.setCenter(cityEntry.marker.getPosition());
+                                window.map.setZoom(9);
+                            });
+                            citiesSidebar.appendChild(cityListItem);
+                        });
+                    });
+                });
         }
     </script>
-    <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        #map { width: 60%; height: 600px; margin: 0 auto; display: block; transition: opacity 1s ease-in-out; z-index: 1; position: relative; }
-        .logo { max-width: 200px; margin-top: 20px; cursor: pointer; touch-action: manipulation; }
-        .sidebar { position: fixed; top: 50px; left: 0; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out; z-index: 1000; }
+        .sidebar-toggle, .cities-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
+        .cities-toggle { top: 50px; }
+        .sidebar, .cities-sidebar { position: fixed; top: 50px; left: 0; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out; z-index: 1000; }
         .collapsed { transform: translateX(-100%); }
-        .sidebar-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
-        .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
-        .artist-item:hover { background-color: #f0f0f0; }
-        
-        @media (max-width: 768px) { 
-            #map { 
-                width: 100%; 
-                height: 90vh; /* Make it taller for mobile */
-                margin: 0; 
-            }
-        }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Artists</button>
+    <button class="cities-toggle" onclick="toggleCitiesSidebar()">☰ Cities</button>
     <div class="sidebar collapsed" id="sidebar">
         <div id="sidebar-content"></div>
     </div>
-    <img src="logo.png" alt="Site Logo" class="logo" onclick="recenterMap()">
-    <h1>Artist Locations Map</h1>
+    <div class="cities-sidebar collapsed" id="cities-sidebar">
+        <div id="cities-sidebar-content"></div>
+    </div>
     <div id="map"></div>
 </body>
 </html>
