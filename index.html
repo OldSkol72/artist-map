@@ -24,20 +24,15 @@
                 center: { lat: 20, lng: 0 }
             });
 
-            fetch('artists.json')  // Load JSON file
+            fetch('artists.json')
                 .then(response => response.json())
                 .then(data => {
                     let locations = {};
                     let openInfoWindow = null;
+                    let sidebar = document.getElementById('sidebar');
 
-                    // Group artists by city and coordinates
                     data.forEach(artist => {
-                        let city = artist.City.trim();
-                        
-                        if (artist.Country && artist.Country.toUpperCase() === "USA") {
-                            city = city.replace(/,? ?USA$/i, "");
-                        }
-
+                        let city = artist.City.trim().replace(/,? ?USA$/i, "");
                         let key = `${city}-${artist.Latitude},${artist.Longitude}`;
                         if (!locations[key]) {
                             locations[key] = {
@@ -53,7 +48,7 @@
                     let markers = [];
                     for (let key in locations) {
                         let location = locations[key];
-                        let contentString = `<h3 style="margin:0;">${location.city}</h3><hr>` +
+                        let contentString = `<h3>${location.city}</h3><hr>` +
                                             [...location.artists].join('<br>');
                         let infowindow = new google.maps.InfoWindow({ content: contentString });
 
@@ -63,19 +58,28 @@
                         });
 
                         marker.addListener('click', function() {
-                            if (openInfoWindow) {
-                                openInfoWindow.close();
-                            }
+                            if (openInfoWindow) openInfoWindow.close();
                             openInfoWindow = infowindow;
                             infowindow.open(map, marker);
                         });
 
                         markers.push(marker);
-                    }
 
-                    new MarkerClusterer(map, markers, {
-                        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-                    });
+                        let artistListItem = document.createElement('div');
+                        artistListItem.classList.add('artist-item');
+                        artistListItem.textContent = [...location.artists].join(', ');
+                        artistListItem.addEventListener('mouseover', () => {
+                            marker.setAnimation(google.maps.Animation.BOUNCE);
+                        });
+                        artistListItem.addEventListener('mouseout', () => {
+                            marker.setAnimation(null);
+                        });
+                        artistListItem.addEventListener('click', () => {
+                            map.setCenter(marker.getPosition());
+                            map.setZoom(6);
+                        });
+                        sidebar.appendChild(artistListItem);
+                    }
                 })
                 .catch(error => console.error('Error loading artist data:', error));
         }
@@ -83,13 +87,21 @@
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
-        #map { width: 100%; height: 600px; }
+        #map { width: 100%; height: 600px; transition: opacity 1s ease-in-out; }
         .logo { max-width: 200px; margin-top: 20px; }
+        .sidebar { position: fixed; top: 50px; left: 10px; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); }
+        .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
+        .artist-item:hover { background-color: #f0f0f0; }
+        .search-bar { width: 100%; padding: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
     <img src="logo.png" alt="Site Logo" class="logo">
     <h1>Artist Locations Map</h1>
     <div id="map"></div>
+    <div class="sidebar" id="sidebar">
+        <input type="text" class="search-bar" placeholder="Search for an artist..." onkeyup="filterArtists(this.value)">
+    </div>
 </body>
 </html>
+
