@@ -18,6 +18,13 @@
                 .catch(error => console.error('Error fetching API key:', error));
         }
 
+        let countryFilterEnabled = false;
+
+        function toggleCountryFilter() {
+            countryFilterEnabled = !countryFilterEnabled;
+            loadGoogleMapsApi(); // Reload map with new filter
+        }
+
         function initMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
@@ -35,6 +42,8 @@
                     let artistGroups = {};
 
                     data.forEach(artist => {
+                        if (countryFilterEnabled && artist.Country !== "USA") return;
+                        
                         let city = artist.City.trim().replace(/,? ?USA$/i, "");
                         let key = `${city}-${artist.Latitude},${artist.Longitude}`;
                         if (!locations[key]) {
@@ -114,16 +123,6 @@
                 }
             });
         }
-
-        function toggleSidebar() {
-            let sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-            if (sidebar.classList.contains('collapsed')) {
-                sidebar.style.zIndex = "1";
-            } else {
-                sidebar.style.zIndex = "1000";
-            }
-        }
     </script>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
@@ -132,13 +131,15 @@
         .logo { max-width: 200px; margin-top: 20px; }
         .sidebar { position: fixed; top: 50px; left: 0; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out; z-index: 1000; }
         .collapsed { transform: translateX(-100%); }
-        .sidebar-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
+        .sidebar-toggle, .country-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
+        .country-toggle { left: 130px; }
         .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
         .artist-item:hover { background-color: #f0f0f0; }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Artists</button>
+    <button class="country-toggle" onclick="toggleCountryFilter()">Toggle USA Artists</button>
     <div class="sidebar" id="sidebar">
         <div id="sidebar-content"></div>
     </div>
@@ -147,6 +148,7 @@
     <div id="map"></div>
 </body>
 </html>
+
 
 
 
