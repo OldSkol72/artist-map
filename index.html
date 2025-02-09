@@ -24,11 +24,12 @@
                 center: { lat: 20, lng: 0 }
             });
 
+            let openInfoWindow = null;
+
             fetch('artists.json')
                 .then(response => response.json())
                 .then(data => {
                     let locations = {};
-                    let openInfoWindow = null;
                     let sidebar = document.getElementById('sidebar-content');
                     sidebar.innerHTML = "";
                     let artistGroups = {};
@@ -52,7 +53,10 @@
                         let location = locations[key];
                         let contentString = `<h3>${location.city}</h3><hr>` +
                                             [...location.artists].join('<br>');
-                        let infowindow = new google.maps.InfoWindow({ content: contentString });
+                        let infowindow = new google.maps.InfoWindow({
+                            content: contentString,
+                            disableAutoPan: true
+                        });
 
                         let marker = new google.maps.Marker({
                             position: { lat: location.lat, lng: location.lng },
@@ -102,6 +106,13 @@
                     });
                 })
                 .catch(error => console.error('Error loading artist data:', error));
+
+            map.addListener('click', function() {
+                if (openInfoWindow) {
+                    openInfoWindow.close();
+                    openInfoWindow = null;
+                }
+            });
         }
 
         function toggleSidebar() {
@@ -136,4 +147,5 @@
     <div id="map"></div>
 </body>
 </html>
+
 
