@@ -18,6 +18,11 @@
                 .catch(error => console.error('Error fetching API key:', error));
         }
 
+        function toggleSidebar() {
+            let sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
         function initMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
@@ -129,7 +134,7 @@
 </head>
 <body onload="loadGoogleMapsApi()">
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Artists</button>
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar collapsed" id="sidebar">
         <div id="sidebar-content"></div>
     </div>
     <img src="logo.png" alt="Site Logo" class="logo">
@@ -137,8 +142,3 @@
     <div id="map"></div>
 </body>
 </html>
-
-
-
-
-
