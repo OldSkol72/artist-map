@@ -6,16 +6,20 @@
     <title>Artist Locations Map</title>
     <script>
         function loadGoogleMapsApi() {
-            fetch('https://oldskol.onrender.com/get-api-key') // Request API key from backend
+            fetch('https://oldskol.onrender.com/get-api-key')
                 .then(response => response.json())
                 .then(data => {
+                    if (!data.apiKey) throw new Error("Missing API Key");
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
                     script.async = true;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
-                .catch(error => console.error('Error fetching API key:', error));
+                .catch(error => {
+                    console.error('Error fetching API key:', error);
+                    alert("Failed to load the map. Please try again later.");
+                });
         }
 
         function toggleSidebar() {
@@ -23,113 +27,105 @@
             sidebar.classList.toggle('collapsed');
         }
 
+        function recenterMap() {
+            if (window.map) {
+                window.map.setCenter({ lat: 25, lng: 10 });
+                window.map.setZoom(2);
+            }
+        }
+
         function initMap() {
-            var map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 2,
-                center: { lat: 25, lng: 10 }
+    var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 2,
+        center: { lat: 25, lng: 10 }
+    });
+
+    let openInfoWindow = null;
+
+    fetch('artists.json')
+        .then(response => response.json())
+        .then(data => {
+            let locations = {};
+            let sidebar = document.getElementById('sidebar-content');
+            sidebar.innerHTML = "";
+            let artistGroups = {};
+
+            data.forEach(artist => {
+                let city = artist.City.trim().replace(/,? ?USA$/i, "");
+                let key = `${city}-${artist.Latitude},${artist.Longitude}`;
+                if (!locations[key]) {
+                    locations[key] = {
+                        lat: artist.Latitude,
+                        lng: artist.Longitude,
+                        city: city,
+                        artists: new Set()
+                    };
+                }
+                locations[key].artists.add(artist.Artist);
             });
 
-            let openInfoWindow = null;
+            let markers = [];
+            for (let key in locations) {
+                let location = locations[key];
+                let contentString = `<h3>${location.city}</h3><hr>` +
+                                    [...location.artists].join('<br>');
+                let infowindow = new google.maps.InfoWindow({
+                    content: contentString,
+                    disableAutoPan: true
+                });
 
-            fetch('artists.json')
-                .then(response => response.json())
-                .then(data => {
-                    let locations = {};
-                    let sidebar = document.getElementById('sidebar-content');
-                    sidebar.innerHTML = "";
-                    let artistGroups = {};
+                let marker = new google.maps.Marker({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: map
+                });
 
-                    data.forEach(artist => {
-                        let city = artist.City.trim().replace(/,? ?USA$/i, "");
-                        let key = `${city}-${artist.Latitude},${artist.Longitude}`;
-                        if (!locations[key]) {
-                            locations[key] = {
-                                lat: artist.Latitude,
-                                lng: artist.Longitude,
-                                city: city,
-                                artists: new Set()
-                            };
-                        }
-                        locations[key].artists.add(artist.Artist);
-                    });
+                marker.addListener('click', function() {
+                    if (openInfoWindow) openInfoWindow.close();
+                    openInfoWindow = infowindow;
+                    infowindow.open(map, marker);
+                });
 
-                    let markers = [];
-                    for (let key in locations) {
-                        let location = locations[key];
-                        let contentString = `<h3>${location.city}</h3><hr>` +
-                                            [...location.artists].join('<br>');
-                        let infowindow = new google.maps.InfoWindow({
-                            content: contentString,
-                            disableAutoPan: true
-                        });
+                markers.push(marker);
 
-                        let marker = new google.maps.Marker({
-                            position: { lat: location.lat, lng: location.lng },
-                            map: map
-                        });
-
-                        marker.addListener('click', function() {
-                            if (openInfoWindow) openInfoWindow.close();
-                            openInfoWindow = infowindow;
-                            infowindow.open(map, marker);
-                        });
-
-                        markers.push(marker);
-
-                        [...location.artists].forEach(artist => {
-                            let firstLetter = artist.charAt(0).toUpperCase();
-                            if (!artistGroups[firstLetter]) {
-                                artistGroups[firstLetter] = [];
-                            }
-                            artistGroups[firstLetter].push({ name: artist, marker: marker });
-                        });
+                [...location.artists].forEach(artist => {
+                    let firstLetter = artist.charAt(0).toUpperCase();
+                    if (!artistGroups[firstLetter]) {
+                        artistGroups[firstLetter] = [];
                     }
+                    artistGroups[firstLetter].push({ name: artist, marker: marker });
+                });
+            }
+        })
+        .catch(error => console.error('Error loading artist data:', error));
 
-                    let sortedLetters = Object.keys(artistGroups).sort();
-                    sortedLetters.forEach(letter => {
-                        let letterHeader = document.createElement('h3');
-                        letterHeader.textContent = letter;
-                        sidebar.appendChild(letterHeader);
-
-                        artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
-                        artistGroups[letter].forEach(artistEntry => {
-                            let artistListItem = document.createElement('div');
-                            artistListItem.classList.add('artist-item');
-                            artistListItem.textContent = artistEntry.name;
-                            artistListItem.addEventListener('mouseover', () => {
-                                artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
-                            });
-                            artistListItem.addEventListener('mouseout', () => {
-                                artistEntry.marker.setAnimation(null);
-                            });
-                            artistListItem.addEventListener('click', () => {
-                                map.setCenter(artistEntry.marker.getPosition());
-                                map.setZoom(9);
-                            });
-                            sidebar.appendChild(artistListItem);
-                        });
-                    });
-                })
-                .catch(error => console.error('Error loading artist data:', error));
-
-            map.addListener('click', function() {
-                if (openInfoWindow) {
-                    openInfoWindow.close();
-                    openInfoWindow = null;
-                }
+    map.addListener('click', function() {
+        let sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
+    });
+}
             });
         }
     </script>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
-        #map { width: 60%; margin: 0 auto; display: flex; align-items: center; justify-content: center; height: 600px; margin: 0 auto; transition: opacity 1s ease-in-out; z-index: 1; position: relative; }
-        .logo { max-width: 200px; margin-top: 20px; }
+        #map {
+            width: 60%;
+            height: 600px;
+            margin: 0 auto;
+            display: block;
+        }
+        @media (max-width: 768px) { 
+            #map { 
+                width: 100%; 
+                height: 90vh;
+                margin: 0; 
+            }
+        }
+        .logo { max-width: 200px; margin-top: 20px; cursor: pointer; touch-action: manipulation; }
         .sidebar { position: fixed; top: 50px; left: 0; width: 250px; height: 80%; overflow-y: auto; background: white; padding: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3); transition: transform 0.3s ease-in-out; z-index: 1000; }
         .collapsed { transform: translateX(-100%); }
         .sidebar-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
-        .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
-        .artist-item:hover { background-color: #f0f0f0; }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
@@ -137,7 +133,7 @@
     <div class="sidebar collapsed" id="sidebar">
         <div id="sidebar-content"></div>
     </div>
-    <img src="logo.png" alt="Site Logo" class="logo">
+    <img src="logo.png" alt="Site Logo" class="logo" onclick="recenterMap()" onclick="recenterMap()">
     <h1>Artist Locations Map</h1>
     <div id="map"></div>
 </body>
