@@ -62,6 +62,17 @@ x<!DOCTYPE html>
                     });
 
                     let markers = [];
+                    let markerCluster;
+
+function applyMarkerClustering(markers) {
+    if (markerCluster) {
+        markerCluster.clearMarkers(); // Clear existing markers if needed
+    }
+    markerCluster = new MarkerClusterer(window.map, markers, {
+        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+    });
+}
+
                     for (let key in locations) {
                         let location = locations[key];
                         let contentString = `<h3>${location.city}</h3><hr>` +
@@ -83,6 +94,7 @@ x<!DOCTYPE html>
                         });
 
                         markers.push(marker);
+applyMarkerClustering(markers); // Apply clustering after adding all markers
 
                         [...location.artists].forEach(artist => {
                             let firstLetter = artist.charAt(0).toUpperCase();
