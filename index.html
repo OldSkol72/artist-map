@@ -30,104 +30,110 @@
             }
         }
 
-        function initMap() {
-            var mapOptions = {
-                zoom: 2,
-                center: { lat: 25, lng: 10 }
-            };
-            
-            window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
-            let openInfoWindow = null;
+    function initMap() {
+        var mapOptions = {
+            zoom: 2,
+            center: { lat: 25, lng: 10 }
+        };
 
-            fetch('artists.json')
-                .then(response => response.json())
-                .then(data => {
-                    let locations = {};
-                    let sidebar = document.getElementById('sidebar-content');
-                    sidebar.innerHTML = "";
-                    let artistGroups = {};
+        window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
+        let openInfoWindow = null;
 
-                    data.forEach(artist => {
-                        let city = artist.City.trim().replace(/,? ?USA$/i, "");
-                        let key = `${city}-${artist.Latitude},${artist.Longitude}`;
-                        if (!locations[key]) {
-                            locations[key] = {
-                                lat: artist.Latitude,
-                                lng: artist.Longitude,
-                                city: city,
-                                artists: new Set()
-                            };
-                        }
-                        locations[key].artists.add(artist.Artist);
-                    });
+        fetch('artists.json')
+            .then(response => response.json())
+            .then(data => {
+                let locations = {};
+                let sidebar = document.getElementById('sidebar-content');
+                sidebar.innerHTML = "";
+                let artistGroups = {};
 
-                    let markers = [];
-                    for (let key in locations) {
-                        let location = locations[key];
-                        let contentString = `<h3>${location.city}</h3><hr>` +
-                                            [...location.artists].join('<br>');
-                        let infowindow = new google.maps.InfoWindow({
-                            content: contentString,
-                            disableAutoPan: true
-                        });
-
-                        let marker = new google.maps.Marker({
-                            position: { lat: location.lat, lng: location.lng },
-                            map: window.map
-                        });
-
-                        marker.addListener('click', function() {
-                            if (openInfoWindow) openInfoWindow.close();
-                            openInfoWindow = infowindow;
-                            infowindow.open(window.map, marker);
-                        });
-
-                        markers.push(marker);
-
-                        [...location.artists].forEach(artist => {
-                            let firstLetter = artist.charAt(0).toUpperCase();
-                            if (!artistGroups[firstLetter]) {
-                                artistGroups[firstLetter] = [];
-                            }
-                            artistGroups[firstLetter].push({ name: artist, marker: marker });
-                        });
+                data.forEach(artist => {
+                    let city = artist.City.trim().replace(/,? ?USA$/i, "");
+                    let key = `${city}-${artist.Latitude},${artist.Longitude}`;
+                    if (!locations[key]) {
+                        locations[key] = {
+                            lat: artist.Latitude,
+                            lng: artist.Longitude,
+                            city: city,
+                            artists: new Set()
+                        };
                     }
-
-                    let sortedLetters = Object.keys(artistGroups).sort();
-                    sortedLetters.forEach(letter => {
-                        let letterHeader = document.createElement('h3');
-                        letterHeader.textContent = letter;
-                        sidebar.appendChild(letterHeader);
-
-                        artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
-                        artistGroups[letter].forEach(artistEntry => {
-                            let artistListItem = document.createElement('div');
-                            artistListItem.classList.add('artist-item');
-                            artistListItem.textContent = artistEntry.name;
-                            artistListItem.addEventListener('mouseover', () => {
-                                artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
-                            });
-                            artistListItem.addEventListener('mouseout', () => {
-                                artistEntry.marker.setAnimation(null);
-                            });
-                            artistListItem.addEventListener('click', () => {
-                                window.map.setCenter(artistEntry.marker.getPosition());
-                                window.map.setZoom(9);
-                            });
-                            sidebar.appendChild(artistListItem);
-                        });
+                    locations[key].artists.add({
+                        name: artist.Artist,
+                        link: artist["Spotify URL"] || "#"
                     });
-                })
-                .catch(error => console.error('Error loading artist data:', error));
+                });
 
-            window.map.addListener('click', function() {
-                if (openInfoWindow) {
-                    openInfoWindow.close();
-                    openInfoWindow = null;
+                let markers = [];
+                for (let key in locations) {
+                    let location = locations[key];
+                    let contentString = `<h3>${location.city}</h3><hr>`;
+                    contentString += [...location.artists]
+                        .map(artist => `<a href="${artist.link}" target="_blank">${artist.name}</a>`)
+                        .join('<br>');
+
+                    let infowindow = new google.maps.InfoWindow({
+                        content: contentString,
+                        disableAutoPan: true
+                    });
+
+                    let marker = new google.maps.Marker({
+                        position: { lat: location.lat, lng: location.lng },
+                        map: window.map
+                    });
+
+                    marker.addListener('click', function() {
+                        if (openInfoWindow) openInfoWindow.close();
+                        openInfoWindow = infowindow;
+                        infowindow.open(window.map, marker);
+                    });
+
+                    markers.push(marker);
+
+                    [...location.artists].forEach(artist => {
+                        let firstLetter = artist.name.charAt(0).toUpperCase();
+                        if (!artistGroups[firstLetter]) {
+                            artistGroups[firstLetter] = [];
+                        }
+                        artistGroups[firstLetter].push({ name: artist.name, link: artist.link, marker: marker });
+                    });
                 }
-                toggleSidebar();
-            });
-        }
+
+                let sortedLetters = Object.keys(artistGroups).sort();
+                sortedLetters.forEach(letter => {
+                    let letterHeader = document.createElement('h3');
+                    letterHeader.textContent = letter;
+                    sidebar.appendChild(letterHeader);
+
+                    artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
+                    artistGroups[letter].forEach(artistEntry => {
+                        let artistListItem = document.createElement('div');
+                        artistListItem.classList.add('artist-item');
+                        artistListItem.innerHTML = `<a href="${artistEntry.link}" target="_blank">${artistEntry.name}</a>`;
+                        artistListItem.addEventListener('mouseover', () => {
+                            artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
+                        });
+                        artistListItem.addEventListener('mouseout', () => {
+                            artistEntry.marker.setAnimation(null);
+                        });
+                        artistListItem.addEventListener('click', () => {
+                            window.map.setCenter(artistEntry.marker.getPosition());
+                            window.map.setZoom(9);
+                        });
+                        sidebar.appendChild(artistListItem);
+                    });
+                });
+            })
+            .catch(error => console.error('Error loading artist data:', error));
+
+        window.map.addListener('click', function() {
+            if (openInfoWindow) {
+                openInfoWindow.close();
+                openInfoWindow = null;
+            }
+            toggleSidebar();
+        });
+    }
     </script>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
