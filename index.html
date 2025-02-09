@@ -18,6 +18,18 @@
             .catch(error => console.error('Error fetching API key:', error));
     }
 
+    function toggleSidebar() {
+        let sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
+    }
+
+    function recenterMap() {
+        if (window.map) {
+            window.map.setCenter({ lat: 25, lng: 10 });
+            window.map.setZoom(2);
+        }
+    }
+
     function initMap() {
         var mapOptions = {
             zoom: 2,
@@ -83,7 +95,7 @@
                     imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
                 });
 
-                // Optimized Sidebar Rendering
+                // Ensure Sidebar Populates
                 let sortedLetters = Object.keys(artistGroups).sort();
                 sortedLetters.forEach(letter => {
                     let letterHeader = document.createElement('h3');
@@ -102,7 +114,7 @@
                     });
                 });
 
-                // Optimized Sidebar Click Handling
+                // Fix Sidebar Click Handling
                 sidebar.addEventListener('click', (event) => {
                     if (event.target.classList.contains('artist-item')) {
                         let lat = parseFloat(event.target.dataset.lat);
@@ -118,7 +130,7 @@
             if (infoWindow) infoWindow.close();
         });
     }
-    </script>      
+    </script> 
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
