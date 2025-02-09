@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artist Locations Map</title>
-          location.artists.join('<br>');
     <script>
     function loadGoogleMapsApi() {
         fetch('https://oldskol.onrender.com/get-api-key') // Request API key from backend
@@ -19,18 +18,6 @@
             .catch(error => console.error('Error fetching API key:', error));
     }
 
-    function toggleSidebar() {
-        let sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('collapsed');
-    }
-
-    function recenterMap() {
-        if (window.map) {
-            window.map.setCenter({ lat: 25, lng: 10 });
-            window.map.setZoom(2);
-        }
-    }
-
     function initMap() {
         var mapOptions = {
             zoom: 2,
@@ -43,30 +30,26 @@
         fetch('artists.json')
             .then(response => response.json())
             .then(data => {
-                console.log("Artists data loaded:", data); // Debugging
-
                 let locations = {};
                 let sidebar = document.getElementById('sidebar-content');
                 sidebar.innerHTML = "";
+                let artistGroups = {};
                 let markers = [];
-                
+
                 // Organizing location data
                 data.forEach(artist => {
                     let city = artist.City.trim().replace(/,? ?USA$/i, "");
                     let key = `${city}-${artist.Latitude},${artist.Longitude}`;
-                    
                     if (!locations[key]) {
                         locations[key] = {
                             lat: artist.Latitude,
                             lng: artist.Longitude,
                             city: city,
-                            artists: []
+                            artists: new Set()
                         };
                     }
-                    locations[key].artists.push(artist.Artist);
+                    locations[key].artists.add(artist.Artist);
                 });
-
-                console.log("Processed locations:", locations); // Debugging
 
                 // Creating markers and sidebar entries
                 for (let key in locations) {
@@ -77,7 +60,7 @@
                     });
 
                     let contentString = `<h3>${location.city}</h3><hr>` +
-                                        location.artists.join('<br>');
+                                        [...location.artists].join('<br>');
 
                     marker.addListener('click', function() {
                         infoWindow.setContent(contentString);
@@ -86,32 +69,47 @@
 
                     markers.push(marker);
 
-                    // Create sidebar entry
-                    let cityHeader = document.createElement('h3');
-                    cityHeader.textContent = location.city;
-                    sidebar.appendChild(cityHeader);
-
-                    location.artists.forEach(artist => {
-                        let artistListItem = document.createElement('div');
-                        artistListItem.classList.add('artist-item');
-                        artistListItem.textContent = artist;
-                        artistListItem.dataset.lat = location.lat;
-                        artistListItem.dataset.lng = location.lng;
-
-                        artistListItem.addEventListener('click', () => {
-                            window.map.setCenter({ lat: location.lat, lng: location.lng });
-                            window.map.setZoom(9);
-                        });
-
-                        sidebar.appendChild(artistListItem);
+                    [...location.artists].forEach(artist => {
+                        let firstLetter = artist.charAt(0).toUpperCase();
+                        if (!artistGroups[firstLetter]) {
+                            artistGroups[firstLetter] = [];
+                        }
+                        artistGroups[firstLetter].push({ name: artist, marker: marker });
                     });
                 }
-
-                console.log("Sidebar populated"); // Debugging
 
                 // Initialize Marker Clustering
                 new MarkerClusterer(window.map, markers, {
                     imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+                });
+
+                // Optimized Sidebar Rendering
+                let sortedLetters = Object.keys(artistGroups).sort();
+                sortedLetters.forEach(letter => {
+                    let letterHeader = document.createElement('h3');
+                    letterHeader.textContent = letter;
+                    sidebar.appendChild(letterHeader);
+
+                    artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
+                    artistGroups[letter].forEach(artistEntry => {
+                        let artistListItem = document.createElement('div');
+                        artistListItem.classList.add('artist-item');
+                        artistListItem.textContent = artistEntry.name;
+                        artistListItem.dataset.lat = artistEntry.marker.getPosition().lat();
+                        artistListItem.dataset.lng = artistEntry.marker.getPosition().lng();
+
+                        sidebar.appendChild(artistListItem);
+                    });
+                });
+
+                // Optimized Sidebar Click Handling
+                sidebar.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('artist-item')) {
+                        let lat = parseFloat(event.target.dataset.lat);
+                        let lng = parseFloat(event.target.dataset.lng);
+                        window.map.setCenter({ lat, lng });
+                        window.map.setZoom(9);
+                    }
                 });
             })
             .catch(error => console.error('Error loading artist data:', error));
@@ -120,7 +118,7 @@
             if (infoWindow) infoWindow.close();
         });
     }
-    </script>
+    </script>      
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
