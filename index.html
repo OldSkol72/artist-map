@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artist Locations Map</title>
+          location.artists.join('<br>');
     <script>
     function loadGoogleMapsApi() {
         fetch('https://oldskol.onrender.com/get-api-key') // Request API key from backend
@@ -18,9 +19,13 @@
             .catch(error => console.error('Error fetching API key:', error));
     }
 
-    function toggleSidebar() {
+    function toggleSidebar(forceClose = false) {
         let sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('collapsed');
+        if (forceClose) {
+            sidebar.classList.add('collapsed'); // Close sidebar when forceClose is true
+        } else {
+            sidebar.classList.toggle('collapsed');
+        }
     }
 
     function recenterMap() {
@@ -42,13 +47,11 @@
         fetch('artists.json')
             .then(response => response.json())
             .then(data => {
-                console.log("Artists data loaded:", data); // Debugging
-
                 let locations = {};
                 let sidebar = document.getElementById('sidebar-content');
                 sidebar.innerHTML = "";
                 let markers = [];
-                
+
                 // Organizing location data
                 data.forEach(artist => {
                     let city = artist.City.trim().replace(/,? ?USA$/i, "");
@@ -65,8 +68,6 @@
                     locations[key].artists.push(artist.Artist);
                 });
 
-                console.log("Processed locations:", locations); // Debugging
-
                 // Creating markers and sidebar entries
                 for (let key in locations) {
                     let location = locations[key];
@@ -78,9 +79,12 @@
                     let contentString = `<h3>${location.city}</h3><hr>` +
                                         location.artists.join('<br>');
 
-                    marker.addListener('click', function() {
+                    marker.addListener('click', function(event) {
                         infoWindow.setContent(contentString);
                         infoWindow.open(window.map, marker);
+                        
+                        // Prevent sidebar from closing when clicking a marker
+                        event.stopPropagation();
                     });
 
                     markers.push(marker);
@@ -106,8 +110,6 @@
                     });
                 }
 
-                console.log("Sidebar populated"); // Debugging
-
                 // Initialize Marker Clustering
                 new MarkerClusterer(window.map, markers, {
                     imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
@@ -115,8 +117,15 @@
             })
             .catch(error => console.error('Error loading artist data:', error));
 
+        // Clicking anywhere on the map toggles the sidebar
         window.map.addListener('click', function() {
+            toggleSidebar(true); // Force closing the sidebar when clicking on the map
             if (infoWindow) infoWindow.close();
+        });
+
+        // Prevent sidebar from closing when clicking inside it
+        document.getElementById('sidebar').addEventListener('click', (event) => {
+            event.stopPropagation();
         });
     }
     </script>
