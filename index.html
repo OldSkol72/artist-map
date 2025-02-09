@@ -24,77 +24,71 @@
                 center: { lat: 20, lng: 0 }
             });
 
-            
+            fetch('artists.json')  // Load JSON file
+                .then(response => response.json())
+                .then(data => {
+                    let locations = {};
+                    let openInfoWindow = null;
 
-fetch('artists.json')  // Load JSON file
-    .then(response => response.json())
-    .then(data => {
-        let locations = {};
-        let openInfoWindow = null;
+                    // Group artists by city and coordinates
+                    data.forEach(artist => {
+                        let city = artist.City.trim();
+                        
+                        if (artist.Country && artist.Country.toUpperCase() === "USA") {
+                            city = city.replace(/,? ?USA$/i, "");
+                        }
 
-        // Group artists by city and coordinates
-        data.forEach(artist => {
-            let city = artist.City.trim(); // Trim to remove extra spaces
-            
-            // Ensure "USA" is removed if present in various formats
-            if (artist.Country && artist.Country.toUpperCase() === "USA") {
-                city = city.replace(/,? ?USA$/i, ""); // Remove ", USA" or " USA"
-            }
+                        let key = `${city}-${artist.Latitude},${artist.Longitude}`;
+                        if (!locations[key]) {
+                            locations[key] = {
+                                lat: artist.Latitude,
+                                lng: artist.Longitude,
+                                city: city,
+                                artists: new Set()
+                            };
+                        }
+                        locations[key].artists.add(artist.Artist);
+                    });
 
-            let key = `${city}-${artist.Latitude},${artist.Longitude}`;
-            if (!locations[key]) {
-                locations[key] = {
-                    lat: artist.Latitude,
-                    lng: artist.Longitude,
-                    city: city,
-                    artists: new Set()
-                };
-            }
-            locations[key].artists.add(artist.Artist);
-        });
+                    let markers = [];
+                    for (let key in locations) {
+                        let location = locations[key];
+                        let contentString = `<h3 style="margin:0;">${location.city}</h3><hr>` +
+                                            [...location.artists].join('<br>');
+                        let infowindow = new google.maps.InfoWindow({ content: contentString });
 
-        let markers = [];
-        for (let key in locations) {
-            let location = locations[key];
+                        let marker = new google.maps.Marker({
+                            position: { lat: location.lat, lng: location.lng },
+                            map: map
+                        });
 
-            // Create a popup with a city header and artist list
-            let contentString = `<h3 style="margin:0;">${location.city}</h3><hr>` +
-                                [...location.artists].join('<br>');
-            let infowindow = new google.maps.InfoWindow({ content: contentString });
+                        marker.addListener('click', function() {
+                            if (openInfoWindow) {
+                                openInfoWindow.close();
+                            }
+                            openInfoWindow = infowindow;
+                            infowindow.open(map, marker);
+                        });
 
-            let marker = new google.maps.Marker({
-                position: { lat: location.lat, lng: location.lng },
-                map: map
-            });
+                        markers.push(marker);
+                    }
 
-            marker.addListener('click', function() {
-                if (openInfoWindow) {
-                    openInfoWindow.close();
-                }
-                openInfoWindow = infowindow;
-                infowindow.open(map, marker);
-            });
-
-            markers.push(marker);
-        }
-
-        // Add marker clustering
-        new MarkerClusterer(map, markers, {
-            imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-        });
-    })
-    .catch(error => console.error('Error loading artist data:', error));
-
-
+                    new MarkerClusterer(map, markers, {
+                        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+                    });
+                })
+                .catch(error => console.error('Error loading artist data:', error));
         }
     </script>
     <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
         #map { width: 100%; height: 600px; }
+        .logo { max-width: 200px; margin-top: 20px; }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
+    <img src="logo.png" alt="Site Logo" class="logo">
     <h1>Artist Locations Map</h1>
     <div id="map"></div>
 </body>
