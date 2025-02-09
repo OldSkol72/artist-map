@@ -30,6 +30,8 @@
                     let locations = {};
                     let openInfoWindow = null;
                     let sidebar = document.getElementById('sidebar-content');
+                    sidebar.innerHTML = "";
+                    let artistGroups = {};
 
                     data.forEach(artist => {
                         let city = artist.City.trim().replace(/,? ?USA$/i, "");
@@ -65,21 +67,39 @@
 
                         markers.push(marker);
 
-                        let artistListItem = document.createElement('div');
-                        artistListItem.classList.add('artist-item');
-                        artistListItem.textContent = [...location.artists].join(', ');
-                        artistListItem.addEventListener('mouseover', () => {
-                            marker.setAnimation(google.maps.Animation.BOUNCE);
+                        [...location.artists].forEach(artist => {
+                            let firstLetter = artist.charAt(0).toUpperCase();
+                            if (!artistGroups[firstLetter]) {
+                                artistGroups[firstLetter] = [];
+                            }
+                            artistGroups[firstLetter].push({ name: artist, marker: marker });
                         });
-                        artistListItem.addEventListener('mouseout', () => {
-                            marker.setAnimation(null);
-                        });
-                        artistListItem.addEventListener('click', () => {
-                            map.setCenter(marker.getPosition());
-                            map.setZoom(6);
-                        });
-                        sidebar.appendChild(artistListItem);
                     }
+
+                    let sortedLetters = Object.keys(artistGroups).sort();
+                    sortedLetters.forEach(letter => {
+                        let letterHeader = document.createElement('h3');
+                        letterHeader.textContent = letter;
+                        sidebar.appendChild(letterHeader);
+
+                        artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
+                        artistGroups[letter].forEach(artistEntry => {
+                            let artistListItem = document.createElement('div');
+                            artistListItem.classList.add('artist-item');
+                            artistListItem.textContent = artistEntry.name;
+                            artistListItem.addEventListener('mouseover', () => {
+                                artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
+                            });
+                            artistListItem.addEventListener('mouseout', () => {
+                                artistEntry.marker.setAnimation(null);
+                            });
+                            artistListItem.addEventListener('click', () => {
+                                map.setCenter(artistEntry.marker.getPosition());
+                                map.setZoom(6);
+                            });
+                            sidebar.appendChild(artistListItem);
+                        });
+                    });
                 })
                 .catch(error => console.error('Error loading artist data:', error));
         }
@@ -116,3 +136,4 @@
     <div id="map"></div>
 </body>
 </html>
+
