@@ -6,16 +6,20 @@
     <title>Artist Locations Map</title>
     <script>
         function loadGoogleMapsApi() {
-            fetch('https://oldskol.onrender.com/get-api-key') // Request API key from backend
+            fetch('https://oldskol.onrender.com/get-api-key')
                 .then(response => response.json())
                 .then(data => {
+                    if (!data.apiKey) throw new Error("Missing API Key");
                     const script = document.createElement('script');
                     script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap`;
                     script.async = true;
                     script.defer = true;
                     document.head.appendChild(script);
                 })
-                .catch(error => console.error('Error fetching API key:', error));
+                .catch(error => {
+                    console.error('Error fetching API key:', error);
+                    alert("Failed to load the map. Please try again later.");
+                });
         }
 
         function toggleSidebar() {
@@ -37,7 +41,6 @@
             });
 
             let openInfoWindow = null;
-
             fetch('artists.json')
                 .then(response => response.json())
                 .then(data => {
@@ -82,7 +85,6 @@
                         });
 
                         markers.push(marker);
-
                         [...location.artists].forEach(artist => {
                             let firstLetter = artist.charAt(0).toUpperCase();
                             if (!artistGroups[firstLetter]) {
@@ -92,39 +94,42 @@
                         });
                     }
 
-                    let sortedLetters = Object.keys(artistGroups).sort();
-                    sortedLetters.forEach(letter => {
+                    let fragment = document.createDocumentFragment();
+                    Object.keys(artistGroups).sort().forEach(letter => {
                         let letterHeader = document.createElement('h3');
                         letterHeader.textContent = letter;
-                        sidebar.appendChild(letterHeader);
+                        fragment.appendChild(letterHeader);
 
                         artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
                         artistGroups[letter].forEach(artistEntry => {
                             let artistListItem = document.createElement('div');
                             artistListItem.classList.add('artist-item');
                             artistListItem.textContent = artistEntry.name;
-                            artistListItem.addEventListener('mouseover', () => {
-                                artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
-                            });
-                            artistListItem.addEventListener('mouseout', () => {
-                                artistEntry.marker.setAnimation(null);
-                            });
+                            artistListItem.addEventListener('mouseover', () => artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE));
+                            artistListItem.addEventListener('mouseout', () => artistEntry.marker.setAnimation(null));
                             artistListItem.addEventListener('click', () => {
                                 map.setCenter(artistEntry.marker.getPosition());
                                 map.setZoom(9);
                             });
-                            sidebar.appendChild(artistListItem);
+                            fragment.appendChild(artistListItem);
                         });
+                    });
+                    sidebar.appendChild(fragment);
+
+                    let markerCluster = new MarkerClusterer(map, markers, {
+                        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
                     });
                 })
                 .catch(error => console.error('Error loading artist data:', error));
 
-            map.addListener('click', function() {
-                if (openInfoWindow) {
-                    openInfoWindow.close();
-                    openInfoWindow = null;
+            map.addListener('click', function(event) {
+                if (!event.placeId) {
+                    if (openInfoWindow) {
+                        openInfoWindow.close();
+                        openInfoWindow = null;
+                    }
+                    toggleSidebar();
                 }
-                toggleSidebar();
             });
         }
     </script>
@@ -141,6 +146,9 @@
         .sidebar-toggle { position: fixed; top: 10px; left: 10px; background: #222; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; z-index: 1100; }
         .artist-item { padding: 8px; border-bottom: 1px solid #ccc; cursor: pointer; }
         .artist-item:hover { background-color: #f0f0f0; }
+        @media (max-width: 600px) {
+            .sidebar { width: 70%; }
+        }
     </style>
 </head>
 <body onload="loadGoogleMapsApi()">
