@@ -23,6 +23,13 @@
             sidebar.classList.toggle('collapsed');
         }
 
+        function closeSidebarOnMapClick() {
+            let sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('collapsed')) {
+                sidebar.classList.add('collapsed');
+            }
+        }
+
         function initMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
                 zoom: 2,
@@ -117,6 +124,7 @@
                     openInfoWindow.close();
                     openInfoWindow = null;
                 }
+                closeSidebarOnMapClick();
             });
         }
     </script>
