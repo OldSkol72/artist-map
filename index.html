@@ -26,7 +26,14 @@
 
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
-
+.logo {
+    width: 120px;  /* ✅ Adjust width */
+    height: auto;  /* ✅ Maintain aspect ratio */
+    display: block;
+    margin: 10px auto; /* ✅ Center the logo */
+    cursor: pointer;
+    touch-action: manipulation;
+}
         /* ✅ Ensure the map container is visible */
         #map {
             width: 100%;
