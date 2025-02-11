@@ -65,39 +65,48 @@
                 });
 
                 let markers = [];
+                
                 for (let key in locations) {
-                    let location = locations[key];
-                    let contentString = `<h3>${location.city}</h3><hr>`;
-                    contentString += [...location.artists]
-                        .map(artist => `<a href="${artist.link}" target="_blank">${artist.name}</a>`)
-                        .join('<br>');
+    let location = locations[key];
+    let contentString = `<h3>${location.city}</h3><hr>`;
+    contentString += [...location.artists]
+        .map(artist => `<a href="${artist.link}" target="_blank">${artist.name}</a>`)
+        .join('<br>');
 
-                    let infowindow = new google.maps.InfoWindow({
-                        content: contentString,
-                        disableAutoPan: true
-                    });
+    let infowindow = new google.maps.InfoWindow({
+        content: contentString,
+        disableAutoPan: true
+    });
 
-                    let marker = new google.maps.Marker({
-                        position: { lat: location.lat, lng: location.lng },
-                        map: window.map
-                    });
+    let marker = new google.maps.Marker({
+        position: { lat: location.lat, lng: location.lng },
+        map: window.map  // Ensure the map is initialized
+    });
 
-                    marker.addListener('click', function() {
-                        if (openInfoWindow) openInfoWindow.close();
-                        openInfoWindow = infowindow;
-                        infowindow.open(window.map, marker);
-                    });
+    marker.addListener('click', function() {
+        if (openInfoWindow) openInfoWindow.close();
+        openInfoWindow = infowindow;
+        infowindow.open(window.map, marker);
+    });
 
-                    markers.push(marker);
+    markers.push(marker);  // Add marker to array
 
-                    [...location.artists].forEach(artist => {
-                        let firstLetter = artist.name.charAt(0).toUpperCase();
-                        if (!artistGroups[firstLetter]) {
-                            artistGroups[firstLetter] = [];
-                        }
-                        artistGroups[firstLetter].push({ name: artist.name, link: artist.link, marker: marker });
-                    });
-                }
+    // Existing code: Add marker reference to artistGroups
+    [...location.artists].forEach(artist => {
+        let firstLetter = artist.name.charAt(0).toUpperCase();
+        if (!artistGroups[firstLetter]) {
+            artistGroups[firstLetter] = [];
+        }
+        artistGroups[firstLetter].push({ name: artist.name, link: artist.link, marker: marker });
+    });
+}
+
+// **Insert MarkerClusterer after markers are created**
+if (markers.length > 0) {
+    new MarkerClusterer(window.map, markers, {
+        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+    });
+}
 
                 let sortedLetters = Object.keys(artistGroups).sort();
                 sortedLetters.forEach(letter => {
