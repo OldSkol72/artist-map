@@ -247,10 +247,12 @@
         }
     </script>
 </head>
-<body onload="loadGoogleMapsApi()">
+<body onload="loadGoogleMapsApi()">   
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Artists</button>
+    <img src="logo.png" alt="Site Logo" class="logo" onclick="recenterMap()">
+    <h1 style="font-size: 2.25em;">Artist Locations Map</h1> 
     <div class="sidebar collapsed" id="sidebar">
-        <img src="logo.png" alt="Site Logo" class="logo" onclick="recenterMap()">
+       
         <div id="sidebar-content"></div>
     </div>
     <div id="map"></div>
