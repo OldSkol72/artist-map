@@ -89,6 +89,10 @@
                     });
 
                     markers.push(marker);
+// After markers have been added
+let markerCluster = new MarkerClusterer(window.map, markers, {
+    imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+});
 
                     [...location.artists].forEach(artist => {
                         let firstLetter = artist.name.charAt(0).toUpperCase();
