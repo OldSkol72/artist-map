@@ -44,7 +44,14 @@
         .then(data => {
             let locations = {};
             let sidebar = document.getElementById('sidebar-content');
-            sidebar.innerHTML = "";
+            sidebar.innerHTML = ""; // ✅ Clear Sidebar
+
+// ✅ Debugging
+console.log("Populating sidebar with artists:", artistGroups);
+
+if (Object.keys(artistGroups).length === 0) {
+    sidebar.innerHTML = "<p>No artists found.</p>";
+}
             let artistGroups = {};
             let markers = []; // Moved outside loop to ensure it exists
 
@@ -92,17 +99,21 @@
                 markers.push(marker); // ✅ Ensures markers exist
 
                 // Store Artists for Sidebar
-                location.artists.forEach(artist => { 
-                    let firstLetter = artist.name.charAt(0).toUpperCase();
-                    if (!artistGroups[firstLetter]) {
-                        artistGroups[firstLetter] = [];
-                    }
-                    artistGroups[firstLetter].push({ 
-                        name: artist.name, 
-                        link: artist.link, 
-                        marker: marker 
-                    });
-                }); // ✅ Fixed missing closing bracket
+               location.artists.forEach(artist => { 
+    let firstLetter = artist.name.charAt(0).toUpperCase();
+    
+    // ✅ Debug: Check if the artist name is valid
+    console.log("Adding artist:", artist.name, "Under:", firstLetter);
+
+    if (!artistGroups[firstLetter]) {
+        artistGroups[firstLetter] = [];
+    }
+    artistGroups[firstLetter].push({ 
+        name: artist.name, 
+        link: artist.link, 
+        marker: marker 
+    });
+});
             }
 
             // ✅ Insert MarkerClusterer After Markers Are Created
@@ -113,6 +124,7 @@
             }
 
             // ✅ Populate Sidebar Correctly
+            console.log("Artist Groups:", artistGroups);
             let sortedLetters = Object.keys(artistGroups).sort();
             sortedLetters.forEach(letter => {
                 let letterHeader = document.createElement('h3');
