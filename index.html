@@ -30,7 +30,7 @@
             }
         }
 
-   function initMap() {
+  function initMap() {
     var mapOptions = {
         zoom: 2,
         center: { lat: 25, lng: 10 }
@@ -44,33 +44,33 @@
         .then(data => {
             let locations = {};
             let sidebar = document.getElementById('sidebar-content');
-            sidebar.innerHTML = ""; // ✅ Clear Sidebar
+            let artistGroups = {}; // ✅ Declare before using
 
-// ✅ Debugging
-console.log("Populating sidebar with artists:", artistGroups);
+            sidebar.innerHTML = ""; // ✅ Clear sidebar at the right time
+            let markers = []; 
 
-if (Object.keys(artistGroups).length === 0) {
-    sidebar.innerHTML = "<p>No artists found.</p>";
-}
-            let artistGroups = {};
-            let markers = []; // Moved outside loop to ensure it exists
+            console.log("Fetching artist data..."); // ✅ Debugging
 
             data.forEach(artist => {
                 let city = artist.City.trim().replace(/,? ?USA$/i, "");
                 let key = `${city}-${artist.Latitude},${artist.Longitude}`;
+                
                 if (!locations[key]) {
                     locations[key] = {
                         lat: artist.Latitude,
                         lng: artist.Longitude,
                         city: city,
-                        artists: [] // ✅ Change Set to Array
+                        artists: []
                     };
                 }
+                
                 locations[key].artists.push({
                     name: artist.Artist,
                     link: artist["Spotify URL"] || "#"
                 });
             });
+
+            console.log("Locations Processed:", locations); // ✅ Debugging
 
             // Create Markers
             for (let key in locations) {
@@ -96,27 +96,27 @@ if (Object.keys(artistGroups).length === 0) {
                     infowindow.open(window.map, marker);
                 });
 
-                markers.push(marker); // ✅ Ensures markers exist
+                markers.push(marker); 
 
                 // Store Artists for Sidebar
-               location.artists.forEach(artist => { 
-    let firstLetter = artist.name.charAt(0).toUpperCase();
-    
-    // ✅ Debug: Check if the artist name is valid
-    console.log("Adding artist:", artist.name, "Under:", firstLetter);
+                location.artists.forEach(artist => { 
+                    let firstLetter = artist.name.charAt(0).toUpperCase();
+                    
+                    if (!artistGroups[firstLetter]) {
+                        artistGroups[firstLetter] = [];
+                    }
 
-    if (!artistGroups[firstLetter]) {
-        artistGroups[firstLetter] = [];
-    }
-    artistGroups[firstLetter].push({ 
-        name: artist.name, 
-        link: artist.link, 
-        marker: marker 
-    });
-});
+                    artistGroups[firstLetter].push({ 
+                        name: artist.name, 
+                        link: artist.link, 
+                        marker: marker 
+                    });
+                });
             }
 
-            // ✅ Insert MarkerClusterer After Markers Are Created
+            console.log("Markers Created:", markers.length); // ✅ Debugging
+
+            // ✅ Ensure MarkerClusterer is only applied if markers exist
             if (markers.length > 0) {
                 new MarkerClusterer(window.map, markers, {
                     imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
@@ -126,6 +126,7 @@ if (Object.keys(artistGroups).length === 0) {
             // ✅ Populate Sidebar Correctly
             console.log("Artist Groups:", artistGroups);
             let sortedLetters = Object.keys(artistGroups).sort();
+
             sortedLetters.forEach(letter => {
                 let letterHeader = document.createElement('h3');
                 letterHeader.textContent = letter;
@@ -149,6 +150,8 @@ if (Object.keys(artistGroups).length === 0) {
                     sidebar.appendChild(artistListItem);
                 });
             });
+
+            console.log("Sidebar Populated!"); // ✅ Debugging
         })
         .catch(error => console.error('Error loading artist data:', error));
 
