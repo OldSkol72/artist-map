@@ -102,7 +102,7 @@
     </style>
 
     <script>
-       function toggleSidebar() {
+      function toggleSidebar() {
     let sidebar = document.getElementById('sidebar');
     sidebar.classList.toggle('collapsed');
 }
@@ -146,7 +146,7 @@ function initMap() {
             let locations = {};
             let sidebar = document.getElementById('sidebar-content');
             let artistGroups = {}; 
-            sidebar.innerHTML = "";
+            sidebar.innerHTML = ""; // Clear previous content
             let markers = [];
 
             console.log("Fetching artist data...");
@@ -275,9 +275,6 @@ function initMap() {
             openInfoWindow.close();
             openInfoWindow = null;
         }
-    });
-}
-        toggleSidebar();
     });
 }
     </script>
