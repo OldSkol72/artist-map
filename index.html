@@ -92,15 +92,6 @@
         .artist-item:hover {
             background-color: #f0f0f0;
         }
-    
-    .artist-links {
-        display: none;
-        font-size: 0.9em;
-        margin-top: 5px;
-    }
-    .artist-item:hover .artist-links {
-        display: block;
-    }
     </style>
 
     <script>
@@ -227,18 +218,8 @@
                         artistGroups[letter].forEach(artistEntry => {
                             let artistListItem = document.createElement('div');
                             artistListItem.classList.add('artist-item');
-                            artistListItem.innerHTML = `
-        <span class="artist-name">${artistEntry.name}</span>
-        <div class="artist-links">
-            <a href="${artistEntry.link}" target="_blank">Spotify</a> | 
-            <a href="${artistEntry.wikipedia}" target="_blank">Wikipedia</a>
-        </div>`;
+                            artistListItem.innerHTML = `<a href="${artistEntry.link}" target="_blank">${artistEntry.name}</a>`;
                             artistListItem.addEventListener('mouseover', () => {
-        artistListItem.querySelector('.artist-links').style.display = 'block';
-    });
-    artistListItem.addEventListener('mouseout', () => {
-        artistListItem.querySelector('.artist-links').style.display = 'none';
-    });
                                 artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
                             });
                             artistListItem.addEventListener('mouseout', () => {
