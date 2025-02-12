@@ -270,12 +270,14 @@ function initMap() {
         })
         .catch(error => console.error('Error loading artist data:', error));
 
-    window.map.addListener('click', function() {
-        if (openInfoWindow) {
-            openInfoWindow.close();
-            openInfoWindow = null;
-        }
-    });
+   window.map.addListener('click', function() {
+    let sidebar = document.getElementById('sidebar');
+    if (sidebar.classList.contains('collapsed')) {
+        sidebar.classList.remove('collapsed'); // Open sidebar if closed
+    } else {
+        sidebar.classList.add('collapsed'); // Close sidebar if open
+    }
+});
 }
     </script>
 </head>
