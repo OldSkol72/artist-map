@@ -102,17 +102,32 @@
     </style>
 
     <script>
-        function toggleSidebar() {
-            let sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-        }
+       function toggleSidebar() {
+    let sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed');
+}
 
-        function recenterMap() {
-            if (window.map) {
-                window.map.setCenter({ lat: 25, lng: 10 });
-                window.map.setZoom(2);
-            }
-     function initMap() {
+function recenterMap() {
+    if (window.map) {
+        window.map.setCenter({ lat: 25, lng: 10 });
+        window.map.setZoom(2);
+    }
+}
+
+function loadGoogleMapsApi() {
+    fetch('https://oldskol.onrender.com/get-api-key')
+        .then(response => response.json())
+        .then(data => {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap&v=weekly&loading=async`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        })
+        .catch(error => console.error('Error fetching API key:', error));
+}
+
+function initMap() {
     console.log("Initializing Google Maps...");
 
     var mapOptions = {
