@@ -135,7 +135,7 @@ function loadGoogleMapsApi() {
         })
         .catch(error => console.error('Error fetching API key:', error));
 }
-
+        
 function initMap() {
     console.log("Initializing Google Maps...");
 
@@ -152,55 +152,18 @@ function initMap() {
     fetch('artists.json')
         .then(response => response.json())
         .then(data => {
-            let locations = {};
-            let sidebar = document.getElementById('sidebar-content');
-            let artistGroups = {}; 
-            sidebar.innerHTML = ""; // Clear previous content
             let markers = [];
 
             console.log("Fetching artist data...");
 
             data.forEach(artist => {
-                let city = artist.City ? artist.City.trim().replace(/,? ?USA$/i, "") : "Unknown City";
-                let key = `${city}-${artist.Latitude},${artist.Longitude}`;
-
-                if (!locations[key]) {
-                    locations[key] = {
-                        lat: artist.Latitude,
-                        lng: artist.Longitude,
-                        city: city,
-                        artists: []
-                    };
-                }
-
-                locations[key].artists.push({
-                    name: artist.Artist,
-                    spotify: artist["Spotify URL"] || "#",
-                    wikipedia: artist["Wikipedia URL"] || "#"
-                });
-            });
-
-            console.log("Locations Processed:", locations);
-
-            for (let key in locations) {
-                let location = locations[key];
-                let contentString = `<h3>${location.city}</h3><hr>`;
-                contentString += location.artists
-                    .map(artist => `
-                        <div>
-                            <strong>${artist.name}</strong><br>
-                            <a href="${artist.spotify}" target="_blank">Spotify</a> | 
-                            <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
-                        </div>`)
-                    .join('<br>');
-
                 let infowindow = new google.maps.InfoWindow({
-                    content: contentString,
+                    content: `<h3>${artist.City}</h3><p>${artist.Artist}</p>`,
                     disableAutoPan: true
                 });
 
                 let marker = new google.maps.Marker({
-                    position: { lat: location.lat, lng: location.lng },
+                    position: { lat: artist.Latitude, lng: artist.Longitude },
                     map: window.map
                 });
 
@@ -211,22 +174,7 @@ function initMap() {
                 });
 
                 markers.push(marker);
-
-                location.artists.forEach(artist => { 
-                    let firstLetter = artist.name.charAt(0).toUpperCase();
-
-                    if (!artistGroups[firstLetter]) {
-                        artistGroups[firstLetter] = [];
-                    }
-
-                    artistGroups[firstLetter].push({ 
-                        name: artist.name, 
-                        spotify: artist.spotify,
-                        wikipedia: artist.wikipedia,
-                        marker: marker 
-                    });
-                });
-            }
+            });
 
             console.log("Markers Created:", markers.length);
 
@@ -236,58 +184,18 @@ function initMap() {
                     markers: markers
                 });
             }
-
-            console.log("Artist Groups:", artistGroups);
-            let sortedLetters = Object.keys(artistGroups).sort();
-
-            sortedLetters.forEach(letter => {
-                let letterHeader = document.createElement('h3');
-                letterHeader.textContent = letter;
-                sidebar.appendChild(letterHeader);
-
-                artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
-                artistGroups[letter].forEach(artistEntry => {
-                    let artistListItem = document.createElement('div');
-                    artistListItem.classList.add('artist-item');
-                    artistListItem.innerHTML = `
-                        <span class="artist-name">${artistEntry.name}</span>
-                        <div class="artist-links">
-                            <a href="${artistEntry.spotify}" target="_blank">Spotify</a> | 
-                            <a href="${artistEntry.wikipedia}" target="_blank">Wikipedia</a>
-                        </div>`;
-
-                    artistListItem.addEventListener('mouseover', () => {
-                        artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
-                        artistListItem.querySelector('.artist-links').style.display = 'block';
-                    });
-
-                    artistListItem.addEventListener('mouseout', () => {
-                        artistEntry.marker.setAnimation(null);
-                        artistListItem.querySelector('.artist-links').style.display = 'none';
-                    });
-
-                    artistListItem.addEventListener('click', () => {
-                        window.map.setCenter(artistEntry.marker.getPosition());
-                        window.map.setZoom(9);
-                    });
-
-                    sidebar.appendChild(artistListItem);
-                });
-            });
-
-            console.log("Sidebar Populated!");
         })
         .catch(error => console.error('Error loading artist data:', error));
 
-   window.map.addListener('click', function() {
-    let sidebar = document.getElementById('sidebar');
-    if (sidebar.classList.contains('collapsed')) {
-        sidebar.classList.remove('collapsed'); // Open sidebar if closed
-    } else {
-        sidebar.classList.add('collapsed'); // Close sidebar if open
-    }
-});
+    // ✅ Add this event listener to close the popup when clicking on the map
+    window.map.addListener('click', function() {
+        if (openInfoWindow) {
+            openInfoWindow.close();
+            openInfoWindow = null;
+        }
+    });
 }
+
     </script>
 </head>
 <body onload="loadGoogleMapsApi()">   
