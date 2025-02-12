@@ -83,11 +83,17 @@
             touch-action: manipulation;
         }
 
-        .artist-item {
-            padding: 8px;
-            border-bottom: 1px solid #ccc;
-            cursor: pointer;
-        }
+       .artist-item {
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.artist-item:hover {
+    background-color: #e0e0e0; /* Light grey hover effect */
+}
+
 .artist-links {
     display: none;
     font-size: 0.9em;
