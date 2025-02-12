@@ -152,18 +152,55 @@ function initMap() {
     fetch('artists.json')
         .then(response => response.json())
         .then(data => {
+            let locations = {};
+            let sidebar = document.getElementById('sidebar-content');
+            let artistGroups = {}; 
+            sidebar.innerHTML = ""; // Clear previous content
             let markers = [];
 
             console.log("Fetching artist data...");
 
             data.forEach(artist => {
+                let city = artist.City ? artist.City.trim().replace(/,? ?USA$/i, "") : "Unknown City";
+                let key = `${city}-${artist.Latitude},${artist.Longitude}`;
+
+                if (!locations[key]) {
+                    locations[key] = {
+                        lat: artist.Latitude,
+                        lng: artist.Longitude,
+                        city: city,
+                        artists: []
+                    };
+                }
+
+                locations[key].artists.push({
+                    name: artist.Artist,
+                    spotify: artist["Spotify URL"] || "#",
+                    wikipedia: artist["Wikipedia URL"] || "#"
+                });
+            });
+
+            console.log("Locations Processed:", locations);
+
+            for (let key in locations) {
+                let location = locations[key];
+                let contentString = `<h3>${location.city}</h3><hr>`;
+                contentString += location.artists
+                    .map(artist => `
+                        <div>
+                            <strong>${artist.name}</strong><br>
+                            <a href="${artist.spotify}" target="_blank">Spotify</a> | 
+                            <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
+                        </div>`)
+                    .join('<br>');
+
                 let infowindow = new google.maps.InfoWindow({
-                    content: `<h3>${artist.City}</h3><p>${artist.Artist}</p>`,
+                    content: contentString,
                     disableAutoPan: true
                 });
 
                 let marker = new google.maps.Marker({
-                    position: { lat: artist.Latitude, lng: artist.Longitude },
+                    position: { lat: location.lat, lng: location.lng },
                     map: window.map
                 });
 
@@ -174,7 +211,22 @@ function initMap() {
                 });
 
                 markers.push(marker);
-            });
+
+                location.artists.forEach(artist => { 
+                    let firstLetter = artist.name.charAt(0).toUpperCase();
+
+                    if (!artistGroups[firstLetter]) {
+                        artistGroups[firstLetter] = [];
+                    }
+
+                    artistGroups[firstLetter].push({ 
+                        name: artist.name, 
+                        spotify: artist.spotify,
+                        wikipedia: artist.wikipedia,
+                        marker: marker 
+                    });
+                });
+            }
 
             console.log("Markers Created:", markers.length);
 
@@ -184,17 +236,11 @@ function initMap() {
                     markers: markers
                 });
             }
-        })
-        .catch(error => console.error('Error loading artist data:', error));
 
-    // ✅ Add this event listener to close the popup when clicking on the map
-    window.map.addListener('click', function() {
-        if (openInfoWindow) {
-            openInfoWindow.close();
-            openInfoWindow = null;
-        }
-    });
-}
+            console.log("Artist Groups:", artistGroups);
+            let sortedLetters = Object.keys(artistGroups).sort();
+
+            sortedLetters
 
     </script>
 </head>
