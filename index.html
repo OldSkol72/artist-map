@@ -27,17 +27,24 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; }
 
-        /* ✅ Ensure the map container is visible */
-        #map {
-            width: 65%;
-            height: 600px;
-            margin: 0 auto;
-            display: block;
-            opacity: 1;
-            transition: opacity 1s ease-in-out;
-            z-index: 1;
-            position: relative;
-        }
+       /* ✅ Ensure the map container is visible */
+#map {
+    width: 90%; /* Wider on mobile */
+    height: 600px;
+    margin: 0 auto;
+    display: block;
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+    z-index: 1;
+    position: relative;
+}
+
+/* Adjust width for larger screens */
+@media (min-width: 768px) {
+    #map {
+        width: 65%;
+    }
+}
 
         /* ✅ Ensure the sidebar is positioned correctly */
         .sidebar {
