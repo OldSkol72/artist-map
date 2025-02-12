@@ -279,13 +279,16 @@ function initMap() {
         })
         .catch(error => console.error('Error loading artist data:', error));
 
-    // ✅ Close popup when clicking anywhere on the map
-    window.map.addListener('click', function() {
-        if (openInfoWindow) {
-            openInfoWindow.close();
-            openInfoWindow = null;
-        }
-    });
+   // ✅ Close popup AND toggle sidebar when clicking anywhere on the map
+window.map.addListener('click', function() {
+    if (openInfoWindow) {
+        openInfoWindow.close();
+        openInfoWindow = null;
+    }
+    
+    let sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed'); // Toggle sidebar when clicking on the map
+});
 }
 
     </script>
