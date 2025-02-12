@@ -24,87 +24,87 @@
     <!-- ✅ Load the correct MarkerClusterer library -->
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
 
-        /* ✅ Ensure the map container is visible */
-        #map {
-            width: 65%;
-            height: 600px;
-            margin: 0 auto;
-            display: block;
-            opacity: 1;
-            transition: opacity 1s ease-in-out;
-            z-index: 1;
-            position: relative;
-        }
+    /* ✅ Ensure the map container is visible */
+    #map {
+        width: 65%;
+        height: 600px;
+        margin: 0 auto;
+        display: block;
+        opacity: 1;
+        transition: opacity 1s ease-in-out;
+        z-index: 1;
+        position: relative;
+    }
 
-        /* ✅ Ensure the sidebar is positioned correctly */
-        .sidebar {
-            position: fixed;
-            top: 50px;
-            left: 0;
-            width: 250px;
-            height: 80%;
-            overflow-y: auto;
-            background: white;
-            padding: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease-in-out;
-            z-index: 1000;
-            text-align: center; /* ✅ Ensure logo and text are centered */
-        }
+    /* ✅ Ensure the sidebar is positioned correctly */
+    .sidebar {
+        position: fixed;
+        top: 50px;
+        left: 0;
+        width: 250px;
+        height: 80%;
+        overflow-y: auto;
+        background: white;
+        padding: 10px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+        text-align: center;
+    }
 
-        .collapsed {
-            transform: translateX(-100%);
-        }
+    .collapsed {
+        transform: translateX(-100%);
+    }
 
-        .sidebar-toggle {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: #222;
-            color: white;
-            padding: 10px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            z-index: 1100;
-            font-size: 1.25em;
-        }
+    .sidebar-toggle {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: #222;
+        color: white;
+        padding: 10px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        z-index: 1100;
+        font-size: 1.25em;
+    }
 
-        /* ✅ Logo size fix */
-        .logo {
-            width: 300px;  /* ✅ Adjust width */
-            height: auto;  /* ✅ Maintain aspect ratio */
-            display: block;
-            margin: 10px auto; /* ✅ Center the logo */
-            cursor: pointer;
-            touch-action: manipulation;
-        }
+    /* ✅ Artist hover effect (Turns gray) */
+    .artist-item {
+        padding: 8px;
+        border-bottom: 1px solid #ccc;
+        cursor: pointer;
+        transition: background 0.3s ease-in-out;
+    }
 
-        .artist-item {
-            padding: 8px;
-            border-bottom: 1px solid #ccc;
-            cursor: pointer;
-        }
-.artist-links {
-    display: none;
-    font-size: 0.9em;
-    margin-top: 5px;
-}
+    .artist-item:hover {
+        background-color: lightgray;
+    }
 
-.artist-item:hover .artist-links {
-    display: block;
-}
+    /* ✅ Hide links until hovering */
+    .artist-links {
+        display: none;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
 
-        }
-    </style>
+    .artist-item:hover .artist-links {
+        display: block;
+    }
+</style>
 
- <script>
-    function toggleSidebar() {
+<script>
+    function toggleSidebar(forceOpen = false) {
         let sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('collapsed');
+        if (forceOpen) {
+            sidebar.classList.remove('collapsed'); // Open sidebar when clicking map
+        } else {
+            sidebar.classList.toggle('collapsed'); // Toggle normally
+        }
     }
 
     function recenterMap() {
@@ -175,9 +175,11 @@
                 artistList.forEach(artist => {
                     artistHTML += `
                         <div class="artist-item" data-lat="${artist.lat}" data-lng="${artist.lng}">
-                            <strong>${artist.name}</strong> <br>
-                            <a href="${artist.spotify}" target="_blank">Spotify</a> | 
-                            <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
+                            <strong>${artist.name}</strong>
+                            <div class="artist-links">
+                                <a href="${artist.spotify}" target="_blank">Spotify</a> | 
+                                <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
+                            </div>
                         </div>`;
                 });
 
@@ -226,13 +228,9 @@
             })
             .catch(error => console.error('❌ Error loading artist data:', error));
 
-        // ✅ Close sidebar when clicking on the map
+        // ✅ Toggle sidebar ON when clicking on the map
         window.map.addListener('click', function() {
-            let sidebar = document.getElementById('sidebar');
-            if (!sidebar.classList.contains('collapsed')) {
-                toggleSidebar();
-            }
-
+            toggleSidebar(true);
             if (openInfoWindow) {
                 openInfoWindow.close();
                 openInfoWindow = null;
