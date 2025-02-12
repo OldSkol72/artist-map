@@ -144,11 +144,11 @@
                 script.defer = true;
                 document.head.appendChild(script);
             })
-            .catch(error => console.error('Error fetching API key:', error));
+            .catch(error => console.error('❌ Error fetching API key:', error));
     }
 
     function initMap() {
-        console.log("Initializing Google Maps...");
+        console.log("✅ Initializing Google Maps...");
 
         var mapOptions = {
             zoom: 2,
@@ -158,7 +158,7 @@
         window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
         let openInfoWindow = null;
 
-        console.log("Google Maps Initialized Successfully!");
+        console.log("✅ Google Maps Initialized Successfully!");
 
         fetch('artists.json')
             .then(response => response.json())
@@ -174,10 +174,12 @@
                 let markers = [];
                 let artistGroups = {};
 
-                console.log("Fetching artist data...");
+                console.log("✅ Fetching artist data...");
 
-                // ✅ Collect artists and group them by 1,2,3... A,B,C...
+                // ✅ Collect artists and group them by 0-9, A, B, C...
                 data.forEach(artist => {
+                    if (!artist.Artist) return;
+
                     let firstChar = artist.Artist.charAt(0).toUpperCase();
                     if (!isNaN(firstChar)) {
                         firstChar = "0-9"; // Group numbers under "0-9"
@@ -187,8 +189,8 @@
                     }
                     artistGroups[firstChar].push({
                         name: artist.Artist,
-                        lat: artist.Latitude,
-                        lng: artist.Longitude,
+                        lat: parseFloat(artist.Latitude) || 0,
+                        lng: parseFloat(artist.Longitude) || 0,
                         spotify: artist["Spotify URL"] || "#",
                         wikipedia: artist["Wikipedia URL"] || "#"
                     });
@@ -217,6 +219,8 @@
 
                 // ✅ Add markers to the map
                 Object.values(artistGroups).flat().forEach(artist => {
+                    if (artist.lat === 0 && artist.lng === 0) return;
+
                     let marker = new google.maps.Marker({
                         position: { lat: artist.lat, lng: artist.lng },
                         map: window.map
@@ -242,12 +246,14 @@
                     item.addEventListener('click', function() {
                         let lat = parseFloat(this.getAttribute('data-lat'));
                         let lng = parseFloat(this.getAttribute('data-lng'));
-                        window.map.setCenter({ lat, lng });
-                        window.map.setZoom(10);
+                        if (lat !== 0 && lng !== 0) {
+                            window.map.setCenter({ lat, lng });
+                            window.map.setZoom(10);
+                        }
                     });
                 });
 
-                console.log("Markers Created:", markers.length);
+                console.log("✅ Markers Created:", markers.length);
 
                 if (markers.length > 0) {
                     new markerClusterer.MarkerClusterer({
