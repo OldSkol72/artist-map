@@ -112,7 +112,7 @@
                 window.map.setCenter({ lat: 25, lng: 10 });
                 window.map.setZoom(2);
             }
-      function initMap() {
+     function initMap() {
     console.log("Initializing Google Maps...");
 
     var mapOptions = {
@@ -122,11 +122,6 @@
 
     window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
     let openInfoWindow = null;
-
-    if (!google.maps) {
-        console.error("Google Maps API failed to load!");
-        return;
-    }
 
     console.log("Google Maps Initialized Successfully!");
 
@@ -142,7 +137,7 @@
             console.log("Fetching artist data...");
 
             data.forEach(artist => {
-                let city = artist.City.trim().replace(/,? ?USA$/i, "");
+                let city = artist.City ? artist.City.trim().replace(/,? ?USA$/i, "") : "Unknown City";
                 let key = `${city}-${artist.Latitude},${artist.Longitude}`;
 
                 if (!locations[key]) {
@@ -212,7 +207,7 @@
             console.log("Markers Created:", markers.length);
 
             if (markers.length > 0) {
-                const markerCluster = new markerClusterer.MarkerClusterer({
+                new markerClusterer.MarkerClusterer({
                     map: window.map,
                     markers: markers
                 });
@@ -265,6 +260,8 @@
             openInfoWindow.close();
             openInfoWindow = null;
         }
+    });
+}
         toggleSidebar();
     });
 }
