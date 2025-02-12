@@ -24,10 +24,10 @@
     <!-- ✅ Load the correct MarkerClusterer library -->
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 
-  <style>
+ <style>
     body { font-family: Arial, sans-serif; text-align: center; }
 
-    /* ✅ Ensure the map container is visible */
+    /* ✅ Map Container */
     #map {
         width: 65%;
         height: 600px;
@@ -39,7 +39,7 @@
         position: relative;
     }
 
-    /* ✅ Ensure the sidebar is positioned correctly */
+    /* ✅ Sidebar */
     .sidebar {
         position: fixed;
         top: 50px;
@@ -52,7 +52,7 @@
         box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
         transition: transform 0.3s ease-in-out;
         z-index: 1000;
-        text-align: center;
+        text-align: left;
     }
 
     .collapsed {
@@ -73,7 +73,25 @@
         font-size: 1.25em;
     }
 
-    /* ✅ Artist hover effect (Turns gray) */
+    /* ✅ Fix Logo Size */
+    .logo {
+        width: 200px;  /* Fixed width */
+        height: auto;
+        display: block;
+        margin: 10px auto;
+        cursor: pointer;
+    }
+
+    /* ✅ Artist Section */
+    .artist-section {
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-top: 10px;
+        padding-top: 5px;
+        border-bottom: 2px solid #ddd;
+    }
+
+    /* ✅ Artist Items */
     .artist-item {
         padding: 8px;
         border-bottom: 1px solid #ccc;
@@ -98,10 +116,12 @@
 </style>
 
 <script>
-    function toggleSidebar(forceOpen = false) {
+    function toggleSidebar(forceOpen = null) {
         let sidebar = document.getElementById('sidebar');
-        if (forceOpen) {
-            sidebar.classList.remove('collapsed'); // Open sidebar when clicking map
+        if (forceOpen === true) {
+            sidebar.classList.remove('collapsed'); // Always open
+        } else if (forceOpen === false) {
+            sidebar.classList.add('collapsed'); // Always close
         } else {
             sidebar.classList.toggle('collapsed'); // Toggle normally
         }
@@ -152,13 +172,20 @@
 
                 sidebar.innerHTML = ""; // ✅ Clear previous content
                 let markers = [];
-                let artistList = [];
+                let artistGroups = {};
 
                 console.log("Fetching artist data...");
 
-                // ✅ Collect all artists into a sortable array
+                // ✅ Collect artists and group them by 1,2,3... A,B,C...
                 data.forEach(artist => {
-                    artistList.push({
+                    let firstChar = artist.Artist.charAt(0).toUpperCase();
+                    if (!isNaN(firstChar)) {
+                        firstChar = "0-9"; // Group numbers under "0-9"
+                    }
+                    if (!artistGroups[firstChar]) {
+                        artistGroups[firstChar] = [];
+                    }
+                    artistGroups[firstChar].push({
                         name: artist.Artist,
                         lat: artist.Latitude,
                         lng: artist.Longitude,
@@ -167,26 +194,29 @@
                     });
                 });
 
-                // ✅ Sort artists alphabetically
-                artistList.sort((a, b) => a.name.localeCompare(b.name));
+                // ✅ Sort groups alphabetically
+                let sortedKeys = Object.keys(artistGroups).sort();
 
-                // ✅ Populate the sidebar with sorted artists (No City Listed)
-                let artistHTML = "";
-                artistList.forEach(artist => {
-                    artistHTML += `
-                        <div class="artist-item" data-lat="${artist.lat}" data-lng="${artist.lng}">
-                            <strong>${artist.name}</strong>
-                            <div class="artist-links">
-                                <a href="${artist.spotify}" target="_blank">Spotify</a> | 
-                                <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
-                            </div>
-                        </div>`;
+                sortedKeys.forEach(letter => {
+                    sidebar.innerHTML += `<div class="artist-section">${letter}</div>`;
+
+                    // Sort artists within each group
+                    artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
+
+                    artistGroups[letter].forEach(artist => {
+                        sidebar.innerHTML += `
+                            <div class="artist-item" data-lat="${artist.lat}" data-lng="${artist.lng}">
+                                <strong>${artist.name}</strong>
+                                <div class="artist-links">
+                                    <a href="${artist.spotify}" target="_blank">Spotify</a> | 
+                                    <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
+                                </div>
+                            </div>`;
+                    });
                 });
 
-                sidebar.innerHTML = artistHTML;
-
                 // ✅ Add markers to the map
-                artistList.forEach(artist => {
+                Object.values(artistGroups).flat().forEach(artist => {
                     let marker = new google.maps.Marker({
                         position: { lat: artist.lat, lng: artist.lng },
                         map: window.map
@@ -228,9 +258,14 @@
             })
             .catch(error => console.error('❌ Error loading artist data:', error));
 
-        // ✅ Toggle sidebar ON when clicking on the map
+        // ✅ Toggle sidebar ON/OFF when clicking on the map
         window.map.addListener('click', function() {
-            toggleSidebar(true);
+            let sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('collapsed')) {
+                toggleSidebar(true);
+            } else {
+                toggleSidebar(false);
+            }
             if (openInfoWindow) {
                 openInfoWindow.close();
                 openInfoWindow = null;
