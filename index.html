@@ -7,18 +7,23 @@
 
     <!-- ✅ Load Google Maps API properly -->
     <script>
-        function loadGoogleMapsApi() {
-            fetch('https://oldskol.onrender.com/get-api-key')
-                .then(response => response.json())
-                .then(data => {
-                    const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap&v=weekly&loading=async`;
-                    script.async = true;
-                    script.defer = true;
-                    document.head.appendChild(script);
-                })
-                .catch(error => console.error('Error fetching API key:', error));
-        }
+       function loadGoogleMapsApi() {
+    fetch('https://oldskol.onrender.com/get-api-key')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.apiKey) {
+                console.error("No API key received.");
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap&v=weekly&loading=async`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        })
+        .catch(error => console.error('Error fetching API key:', error));
+}
+        
     </script>
 
     <!-- ✅ Load the correct MarkerClusterer library -->
@@ -83,14 +88,16 @@
             touch-action: manipulation;
         }
 
-        .artist-item {
-            padding: 8px;
-            border-bottom: 1px solid #ccc;
-            cursor: pointer;
-        }
+       .artist-links {
+    display: none;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
 
-        .artist-item:hover {
-            background-color: #f0f0f0;
+.artist-item:hover .artist-links {
+    display: block;
+}
+
         }
     </style>
 
