@@ -202,21 +202,6 @@ function initMap() {
                 });
 
                 markers.push(marker);
-
-                location.artists.forEach(artist => { 
-                    let firstLetter = artist.name.charAt(0).toUpperCase();
-
-                    if (!artistGroups[firstLetter]) {
-                        artistGroups[firstLetter] = [];
-                    }
-
-                    artistGroups[firstLetter].push({ 
-                        name: artist.name, 
-                        spotify: artist.spotify,
-                        wikipedia: artist.wikipedia,
-                        marker: marker 
-                    });
-                });
             }
 
             console.log("Markers Created:", markers.length);
@@ -227,56 +212,23 @@ function initMap() {
                     markers: markers
                 });
             }
-
-            console.log("Artist Groups:", artistGroups);
-            let sortedLetters = Object.keys(artistGroups).sort();
-
-            sortedLetters.forEach(letter => {
-                let letterHeader = document.createElement('h3');
-                letterHeader.textContent = letter;
-                sidebar.appendChild(letterHeader);
-
-                artistGroups[letter].sort((a, b) => a.name.localeCompare(b.name));
-                artistGroups[letter].forEach(artistEntry => {
-                    let artistListItem = document.createElement('div');
-                    artistListItem.classList.add('artist-item');
-                    artistListItem.innerHTML = `
-                        <span class="artist-name">${artistEntry.name}</span>
-                        <div class="artist-links">
-                            <a href="${artistEntry.spotify}" target="_blank">Spotify</a> | 
-                            <a href="${artistEntry.wikipedia}" target="_blank">Wikipedia</a>
-                        </div>`;
-
-                    artistListItem.addEventListener('mouseover', () => {
-                        artistEntry.marker.setAnimation(google.maps.Animation.BOUNCE);
-                        artistListItem.querySelector('.artist-links').style.display = 'block';
-                    });
-
-                    artistListItem.addEventListener('mouseout', () => {
-                        artistEntry.marker.setAnimation(null);
-                        artistListItem.querySelector('.artist-links').style.display = 'none';
-                    });
-
-                    artistListItem.addEventListener('click', () => {
-                        window.map.setCenter(artistEntry.marker.getPosition());
-                        window.map.setZoom(9);
-                    });
-
-                    sidebar.appendChild(artistListItem);
-                });
-            });
-
-            console.log("Sidebar Populated!");
         })
         .catch(error => console.error('Error loading artist data:', error));
 
+    // ✅ Close sidebar when clicking on the map
     window.map.addListener('click', function() {
+        let sidebar = document.getElementById('sidebar');
+        if (!sidebar.classList.contains('collapsed')) {
+            toggleSidebar();
+        }
+
         if (openInfoWindow) {
             openInfoWindow.close();
             openInfoWindow = null;
         }
     });
 }
+
     </script>
 </head>
 <body onload="loadGoogleMapsApi()">   
