@@ -145,8 +145,13 @@ function initMap() {
         .then(data => {
             let locations = {};
             let sidebar = document.getElementById('sidebar-content');
-            let artistGroups = {}; 
-            sidebar.innerHTML = ""; // Clear previous content
+
+            if (!sidebar) {
+                console.error("❌ Sidebar element not found!");
+                return;
+            }
+
+            sidebar.innerHTML = ""; // ✅ Clear previous content
             let markers = [];
 
             console.log("Fetching artist data...");
@@ -173,8 +178,33 @@ function initMap() {
 
             console.log("Locations Processed:", locations);
 
+            // ✅ Populate sidebar
+            let artistHTML = "";
+            Object.keys(locations).sort().forEach(key => {
+                let location = locations[key];
+
+                artistHTML += `<h3>${location.city}</h3><hr>`;
+
+                location.artists.forEach(artist => {
+                    artistHTML += `
+                        <div class="artist-item">
+                            <strong>${artist.name}</strong><br>
+                            <a href="${artist.spotify}" target="_blank">Spotify</a> | 
+                            <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
+                        </div>`;
+                });
+            });
+
+            sidebar.innerHTML = artistHTML; // ✅ Insert artists into sidebar
+
+            // ✅ Add markers to map
             for (let key in locations) {
                 let location = locations[key];
+                let marker = new google.maps.Marker({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: window.map
+                });
+
                 let contentString = `<h3>${location.city}</h3><hr>`;
                 contentString += location.artists
                     .map(artist => `
@@ -188,11 +218,6 @@ function initMap() {
                 let infowindow = new google.maps.InfoWindow({
                     content: contentString,
                     disableAutoPan: true
-                });
-
-                let marker = new google.maps.Marker({
-                    position: { lat: location.lat, lng: location.lng },
-                    map: window.map
                 });
 
                 marker.addListener('click', function() {
@@ -213,7 +238,7 @@ function initMap() {
                 });
             }
         })
-        .catch(error => console.error('Error loading artist data:', error));
+        .catch(error => console.error('❌ Error loading artist data:', error));
 
     // ✅ Close sidebar when clicking on the map
     window.map.addListener('click', function() {
