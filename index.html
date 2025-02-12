@@ -101,160 +101,149 @@
         }
     </style>
 
-    <script>
-      function toggleSidebar() {
-    let sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('collapsed');
-}
-
-function recenterMap() {
-    if (window.map) {
-        window.map.setCenter({ lat: 25, lng: 10 });
-        window.map.setZoom(2);
+   <script>
+    function toggleSidebar() {
+        let sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
     }
-}
 
-function loadGoogleMapsApi() {
-    fetch('https://oldskol.onrender.com/get-api-key')
-        .then(response => response.json())
-        .then(data => {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap&v=weekly&loading=async`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-        })
-        .catch(error => console.error('Error fetching API key:', error));
-}
+    function recenterMap() {
+        if (window.map) {
+            window.map.setCenter({ lat: 25, lng: 10 });
+            window.map.setZoom(2);
+        }
+    }
 
-function initMap() {
-    console.log("Initializing Google Maps...");
+    function loadGoogleMapsApi() {
+        fetch('https://oldskol.onrender.com/get-api-key')
+            .then(response => response.json())
+            .then(data => {
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&callback=initMap&v=weekly&loading=async`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            })
+            .catch(error => console.error('Error fetching API key:', error));
+    }
 
-    var mapOptions = {
-        zoom: 2,
-        center: { lat: 25, lng: 10 }
-    };
+    function initMap() {
+        console.log("Initializing Google Maps...");
 
-    window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
-    let openInfoWindow = null;
+        var mapOptions = {
+            zoom: 2,
+            center: { lat: 25, lng: 10 }
+        };
 
-    console.log("Google Maps Initialized Successfully!");
+        window.map = new google.maps.Map(document.getElementById('map'), mapOptions);
+        let openInfoWindow = null;
 
-    fetch('artists.json')
-        .then(response => response.json())
-        .then(data => {
-            let locations = {};
-            let sidebar = document.getElementById('sidebar-content');
+        console.log("Google Maps Initialized Successfully!");
 
-            if (!sidebar) {
-                console.error("❌ Sidebar element not found!");
-                return;
-            }
+        fetch('artists.json')
+            .then(response => response.json())
+            .then(data => {
+                let sidebar = document.getElementById('sidebar-content');
 
-            sidebar.innerHTML = ""; // ✅ Clear previous content
-            let markers = [];
-
-            console.log("Fetching artist data...");
-
-            data.forEach(artist => {
-                let city = artist.City ? artist.City.trim().replace(/,? ?USA$/i, "") : "Unknown City";
-                let key = `${city}-${artist.Latitude},${artist.Longitude}`;
-
-                if (!locations[key]) {
-                    locations[key] = {
-                        lat: artist.Latitude,
-                        lng: artist.Longitude,
-                        city: city,
-                        artists: []
-                    };
+                if (!sidebar) {
+                    console.error("❌ Sidebar element not found!");
+                    return;
                 }
 
-                locations[key].artists.push({
-                    name: artist.Artist,
-                    spotify: artist["Spotify URL"] || "#",
-                    wikipedia: artist["Wikipedia URL"] || "#"
+                sidebar.innerHTML = ""; // ✅ Clear previous content
+                let markers = [];
+                let artistList = [];
+
+                console.log("Fetching artist data...");
+
+                // ✅ Collect all artists into a sortable array
+                data.forEach(artist => {
+                    artistList.push({
+                        name: artist.Artist,
+                        city: artist.City || "Unknown City",
+                        lat: artist.Latitude,
+                        lng: artist.Longitude,
+                        spotify: artist["Spotify URL"] || "#",
+                        wikipedia: artist["Wikipedia URL"] || "#"
+                    });
                 });
-            });
 
-            console.log("Locations Processed:", locations);
+                // ✅ Sort artists alphabetically
+                artistList.sort((a, b) => a.name.localeCompare(b.name));
 
-            // ✅ Populate sidebar
-            let artistHTML = "";
-            Object.keys(locations).sort().forEach(key => {
-                let location = locations[key];
-
-                artistHTML += `<h3>${location.city}</h3><hr>`;
-
-                location.artists.forEach(artist => {
+                // ✅ Populate the sidebar with sorted artists
+                let artistHTML = "";
+                artistList.forEach(artist => {
                     artistHTML += `
-                        <div class="artist-item">
-                            <strong>${artist.name}</strong><br>
+                        <div class="artist-item" data-lat="${artist.lat}" data-lng="${artist.lng}">
+                            <strong>${artist.name}</strong> <br>
+                            <span style="font-size: 0.8em; color: gray;">${artist.city}</span> <br>
                             <a href="${artist.spotify}" target="_blank">Spotify</a> | 
                             <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
                         </div>`;
                 });
-            });
 
-            sidebar.innerHTML = artistHTML; // ✅ Insert artists into sidebar
+                sidebar.innerHTML = artistHTML;
 
-            // ✅ Add markers to map
-            for (let key in locations) {
-                let location = locations[key];
-                let marker = new google.maps.Marker({
-                    position: { lat: location.lat, lng: location.lng },
-                    map: window.map
+                // ✅ Add markers to the map
+                artistList.forEach(artist => {
+                    let marker = new google.maps.Marker({
+                        position: { lat: artist.lat, lng: artist.lng },
+                        map: window.map
+                    });
+
+                    let infowindow = new google.maps.InfoWindow({
+                        content: `<h3>${artist.name}</h3>
+                                  <p>${artist.city}</p>
+                                  <a href="${artist.spotify}" target="_blank">Spotify</a> | 
+                                  <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>`
+                    });
+
+                    marker.addListener('click', function() {
+                        if (openInfoWindow) openInfoWindow.close();
+                        openInfoWindow = infowindow;
+                        infowindow.open(window.map, marker);
+                    });
+
+                    markers.push(marker);
+
+                    // ✅ Add click event to sidebar items to zoom to location
+                    document.querySelectorAll('.artist-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            let lat = parseFloat(this.getAttribute('data-lat'));
+                            let lng = parseFloat(this.getAttribute('data-lng'));
+                            window.map.setCenter({ lat, lng });
+                            window.map.setZoom(10);
+                        });
+                    });
                 });
 
-                let contentString = `<h3>${location.city}</h3><hr>`;
-                contentString += location.artists
-                    .map(artist => `
-                        <div>
-                            <strong>${artist.name}</strong><br>
-                            <a href="${artist.spotify}" target="_blank">Spotify</a> | 
-                            <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
-                        </div>`)
-                    .join('<br>');
+                console.log("Markers Created:", markers.length);
 
-                let infowindow = new google.maps.InfoWindow({
-                    content: contentString,
-                    disableAutoPan: true
-                });
+                if (markers.length > 0) {
+                    new markerClusterer.MarkerClusterer({
+                        map: window.map,
+                        markers: markers
+                    });
+                }
+            })
+            .catch(error => console.error('❌ Error loading artist data:', error));
 
-                marker.addListener('click', function() {
-                    if (openInfoWindow) openInfoWindow.close();
-                    openInfoWindow = infowindow;
-                    infowindow.open(window.map, marker);
-                });
-
-                markers.push(marker);
+        // ✅ Close sidebar when clicking on the map
+        window.map.addListener('click', function() {
+            let sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('collapsed')) {
+                toggleSidebar();
             }
 
-            console.log("Markers Created:", markers.length);
-
-            if (markers.length > 0) {
-                new markerClusterer.MarkerClusterer({
-                    map: window.map,
-                    markers: markers
-                });
+            if (openInfoWindow) {
+                openInfoWindow.close();
+                openInfoWindow = null;
             }
-        })
-        .catch(error => console.error('❌ Error loading artist data:', error));
+        });
+    }
+</script>
 
-    // ✅ Close sidebar when clicking on the map
-    window.map.addListener('click', function() {
-        let sidebar = document.getElementById('sidebar');
-        if (!sidebar.classList.contains('collapsed')) {
-            toggleSidebar();
-        }
-
-        if (openInfoWindow) {
-            openInfoWindow.close();
-            openInfoWindow = null;
-        }
-    });
-}
-
-    </script>
 </head>
 <body onload="loadGoogleMapsApi()">   
     <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Artists</button>
