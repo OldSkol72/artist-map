@@ -101,7 +101,7 @@
         }
     </style>
 
-   <script>
+ <script>
     function toggleSidebar() {
         let sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('collapsed');
@@ -160,7 +160,6 @@
                 data.forEach(artist => {
                     artistList.push({
                         name: artist.Artist,
-                        city: artist.City || "Unknown City",
                         lat: artist.Latitude,
                         lng: artist.Longitude,
                         spotify: artist["Spotify URL"] || "#",
@@ -171,13 +170,12 @@
                 // ✅ Sort artists alphabetically
                 artistList.sort((a, b) => a.name.localeCompare(b.name));
 
-                // ✅ Populate the sidebar with sorted artists
+                // ✅ Populate the sidebar with sorted artists (No City Listed)
                 let artistHTML = "";
                 artistList.forEach(artist => {
                     artistHTML += `
                         <div class="artist-item" data-lat="${artist.lat}" data-lng="${artist.lng}">
                             <strong>${artist.name}</strong> <br>
-                            <span style="font-size: 0.8em; color: gray;">${artist.city}</span> <br>
                             <a href="${artist.spotify}" target="_blank">Spotify</a> | 
                             <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>
                         </div>`;
@@ -194,7 +192,6 @@
 
                     let infowindow = new google.maps.InfoWindow({
                         content: `<h3>${artist.name}</h3>
-                                  <p>${artist.city}</p>
                                   <a href="${artist.spotify}" target="_blank">Spotify</a> | 
                                   <a href="${artist.wikipedia}" target="_blank">Wikipedia</a>`
                     });
@@ -206,15 +203,15 @@
                     });
 
                     markers.push(marker);
+                });
 
-                    // ✅ Add click event to sidebar items to zoom to location
-                    document.querySelectorAll('.artist-item').forEach(item => {
-                        item.addEventListener('click', function() {
-                            let lat = parseFloat(this.getAttribute('data-lat'));
-                            let lng = parseFloat(this.getAttribute('data-lng'));
-                            window.map.setCenter({ lat, lng });
-                            window.map.setZoom(10);
-                        });
+                // ✅ Add click event to sidebar items to zoom to location
+                document.querySelectorAll('.artist-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        let lat = parseFloat(this.getAttribute('data-lat'));
+                        let lng = parseFloat(this.getAttribute('data-lng'));
+                        window.map.setCenter({ lat, lng });
+                        window.map.setZoom(10);
                     });
                 });
 
